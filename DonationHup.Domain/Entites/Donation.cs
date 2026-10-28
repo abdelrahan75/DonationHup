@@ -1,4 +1,5 @@
 ﻿using DonationHup.Domain.Enum;
+using DonationHup.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,17 +12,51 @@ namespace DonationHup.Domain.Entites
     {
         
 
-        public int CampaignId { get; set; }
+        public Guid CampaignId { get; private set; }
 
-        public int DonorUserId { get; set; }
+        public Guid DonorUserId { get; private set; }
 
-        public int Amount { get; set; }
+        public decimal Amount { get; private set; }
 
-        public DonationStutes Stutes { get; set; } = DonationStutes.Pending;
+        public DonationStutes Stutes { get; private set; } = DonationStutes.Pending;
 
 
-        public DateTime CompletedAt { get; set; }
-        public int ReceiptNumber { get; set; } 
+        public DateTime? CompletedAt { get; private set; }
+        public string? ReceiptNumber { get; private set; }
 
+        public static Donation Create(Campaign campaign, Guid donorUserId, decimal amount,
+        decimal minAmount, decimal maxAmount, DateTime now)
+        {
+            if (!campaign.CanAcceptDonation(now))
+                throw new DomainException("Campaign is not accepting donations.");
+            if (amount < minAmount || amount > maxAmount)
+                throw new DomainException("Donation amount is out of range.");
+
+            return new Donation
+            {
+                Id = Guid.NewGuid(),
+                CampaignId = campaign.Id,
+                DonorUserId = donorUserId,
+                Amount = amount,
+                Stutes = DonationStutes.Pending
+            };
+        }
+        public void MarkSucceeded(Campaign campaign, string receiptNumber, DateTime now)
+        {
+            if (Stutes != DonationStutes.Pending)
+                throw new DomainException("Only a pending donation can succeed.");
+
+            Stutes = DonationStutes.Succeeded;
+            CompletedAt = now;
+            ReceiptNumber = receiptNumber;
+            campaign.AddDonation(Amount);
+        }
+        public void MarkFailed()
+        {
+            if (Stutes != DonationStutes.Pending)
+                throw new DomainException("Only a pending donation can fail.");
+
+            Stutes = DonationStutes.Failed;
+        }
     }
 }
