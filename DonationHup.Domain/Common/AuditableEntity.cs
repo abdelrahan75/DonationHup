@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Domain.Entites
+namespace DonationHup.Domain.Common
 {
-    public abstract class AuditableEntity : GenaricEntity
+    public abstract class AuditableEntity 
     {
+        public Guid Id { get; protected set; }
         public DateTime CreatedAt { get; protected set; } 
         public DateTime UpdatedAt { get; protected set; }
     }

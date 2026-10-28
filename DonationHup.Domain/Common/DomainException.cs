@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Domain.Exceptions
+namespace DonationHup.Domain.Common
 {
     public class DomainException(string message) : Exception(message)    {
     }

@@ -1,4 +1,5 @@
-﻿using DonationHup.Domain.Exceptions;
+﻿using DonationHup.Domain.Common;
+using DonationHup.Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
