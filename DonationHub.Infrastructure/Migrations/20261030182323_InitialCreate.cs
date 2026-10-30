@@ -243,7 +243,6 @@ namespace DonationHub.Infrastructure.Migrations
                     RaisedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CategoryId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BannerFileName = table.Column<string>(type: "nvarchar(260)", maxLength: 260, nullable: true),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -267,12 +266,6 @@ namespace DonationHub.Infrastructure.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Campaigns_Categories_CategoryId1",
-                        column: x => x.CategoryId1,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -281,7 +274,6 @@ namespace DonationHub.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CampaignId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CampaignId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DonorUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Stutes = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
@@ -306,12 +298,6 @@ namespace DonationHub.Infrastructure.Migrations
                         principalTable: "Campaigns",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Donations_Campaigns_CampaignId1",
-                        column: x => x.CampaignId1,
-                        principalTable: "Campaigns",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -320,7 +306,7 @@ namespace DonationHub.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DonationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StripePaymentIntentId = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    StripePaymentIntentId = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     StripeCheckoutSessionId = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
@@ -384,11 +370,6 @@ namespace DonationHub.Infrastructure.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Campaigns_CategoryId1",
-                table: "Campaigns",
-                column: "CategoryId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Campaigns_CreatedByUserId",
                 table: "Campaigns",
                 column: "CreatedByUserId");
@@ -409,11 +390,6 @@ namespace DonationHub.Infrastructure.Migrations
                 name: "IX_Donations_CampaignId",
                 table: "Donations",
                 column: "CampaignId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Donations_CampaignId1",
-                table: "Donations",
-                column: "CampaignId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Donations_DonorUserId",

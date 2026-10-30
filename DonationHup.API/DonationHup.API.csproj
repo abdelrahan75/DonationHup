@@ -17,7 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\DonationHub.Infrastructure\DonationHub.Infrastructure.csproj" />
     <ProjectReference Include="..\DonationHup.Application\DonationHup.Application.csproj" />
-    <ProjectReference Include="..\DonationHup.Domain\DonationHup.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

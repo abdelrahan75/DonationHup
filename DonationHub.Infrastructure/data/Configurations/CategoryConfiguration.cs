@@ -23,10 +23,7 @@ namespace DonationHub.Infrastructure.data.Configurations
 
             builder.HasIndex(c => c.ArName).IsUnique();
             builder.HasIndex(c => c.EnName).IsUnique();
-            builder.HasMany(c => c.Campaigns)
-                .WithOne()
-                .HasForeignKey(c => c.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            
         }
     }
 }

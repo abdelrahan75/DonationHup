@@ -30,10 +30,15 @@ namespace DonationHub.Infrastructure.data.Configurations
 
             builder.Property(c => c.RowVersion).IsRowVersion();
 
+            builder.HasOne(c => c.Category)
+                 .WithMany(c => c.Campaigns)
+                 .HasForeignKey(c => c.CategoryId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasMany(c => c.Donations)
-                .WithOne()
-                .HasForeignKey(d => d.CampaignId)
-                .OnDelete(DeleteBehavior.Restrict);
+                 .WithOne(d => d.Campaign)
+                 .HasForeignKey(d => d.CampaignId)
+                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne<ApplicationUser>()
                 .WithMany()

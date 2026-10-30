@@ -14,8 +14,8 @@ namespace DonationHup.Domain.Entites
     {
 
         public Guid DonationId { get; private set; }
-        public string StripePaymentIntentId { get; private set; }
-        public string? StripeCheckoutSessionId  { get; private set; }
+        public string? StripePaymentIntentId { get; private set; }
+        public string StripeCheckoutSessionId  { get; private set; }
         public decimal Amount { get; private set; }
         public PaymentAttemptStatus Status { get; private set; } = PaymentAttemptStatus.Created;
 
