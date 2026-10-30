@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/SRS/">
+    <Project Path="DonationHub.Infrastructure/DonationHub.Infrastructure.csproj" />
+    <Project Path="DonationHup.API/DonationHup.API.csproj" />
+    <Project Path="DonationHup.Application/DonationHup.Application.csproj" />
+    <Project Path="DonationHup.Domain/DonationHup.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Test/" />
+</Solution>
