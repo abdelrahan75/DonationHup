@@ -9,33 +9,56 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Domain.Entites
 {
-    public class PaymentAttempt:AuditableEntity
+ 
+    public class PaymentAttempt: Entity
     {
 
         public Guid DonationId { get; private set; }
-        public string? StripePaymentIntentId { get; private set; }
+        public string StripePaymentIntentId { get; private set; }
         public string? StripeCheckoutSessionId  { get; private set; }
         public decimal Amount { get; private set; }
-        public PaymentAttemptStatus Stutes { get; private set; } = PaymentAttemptStatus.Created;
-        public static PaymentAttempt Create(Guid donationId, string stripeCheckoutSessionId, decimal amount) => new()
-        {
-            Id = Guid.NewGuid(),
-            DonationId = donationId,
-            StripeCheckoutSessionId = stripeCheckoutSessionId,
-            Amount = amount,
-            Stutes = PaymentAttemptStatus.Created
-        };
-        public void SetPaymentIntent(string paymentIntentId) => StripePaymentIntentId = paymentIntentId;
-        public void MarkSucceeded() => Finish(PaymentAttemptStatus.Succeeded);
-        public void MarkFailed() => Finish(PaymentAttemptStatus.Failed);
-        public void MarkExpired() => Finish(PaymentAttemptStatus.Expired);
+        public PaymentAttemptStatus Status { get; private set; } = PaymentAttemptStatus.Created;
 
-        private void Finish(PaymentAttemptStatus status)
-        {
-            if (Stutes != PaymentAttemptStatus.Created)
-                throw new DomainException("Payment attempt is already in a final state.");
+        public DateTime UpdatedAt { get; private set; }
 
-            Stutes = status;
+        public string? FailureCode { get; private set; } 
+        private PaymentAttempt() { } 
+        public static PaymentAttempt Create(Guid donationId, string checkoutSessionId, decimal amount, DateTime nowUtc)
+        {
+            return new PaymentAttempt
+            {
+                DonationId = donationId,
+                StripeCheckoutSessionId = checkoutSessionId,
+                Amount = amount,
+                Status = PaymentAttemptStatus.Created,
+                CreatedAt = nowUtc,
+                UpdatedAt = nowUtc
+            };
+        }
+        public void MarkSucceeded(string? paymentIntentId, DateTime nowUtc)
+        {
+            EnsureCreated();
+            Status = PaymentAttemptStatus.Succeeded;
+            StripePaymentIntentId = paymentIntentId;
+            UpdatedAt = nowUtc;
+        }
+        public void MarkFailed(string? failureCode, DateTime nowUtc)
+        {
+            EnsureCreated();
+            Status = PaymentAttemptStatus.Failed;
+            FailureCode = failureCode;
+            UpdatedAt = nowUtc;
+        }
+        public void MarkExpired(DateTime nowUtc)
+        {
+            EnsureCreated();
+            Status = PaymentAttemptStatus.Expired;
+            UpdatedAt = nowUtc;
+        }
+        private void EnsureCreated()
+        {
+            if (Status != PaymentAttemptStatus.Created)
+                throw new DomainException("Donation.InvalidState", "This payment attempt is already final.");
         }
 
 

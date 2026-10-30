@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using DonationHup.Domain.Entites;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ namespace DonationHub.Infrastructure.Identity
 {
     public class ApplicationUser : IdentityUser<Guid>
     {
-        public string FullName { get; set; } 
-        public string PreferredLanguage { get; set; } 
+        public string FullName { get; set; } = string.Empty;
+        public string PreferredLanguage { get; set; } = "en"; 
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
     }

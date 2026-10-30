@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Domain.Entites
 {
-    public class Campaign : AuditableEntity
+    public class Campaign : Entity
     {
-     
+        private readonly List<Donation> _donations = new();
         public string ArName { get; private set; } = string.Empty;
         public string EnName { get; private set; } = string.Empty;
         public string ArDescription { get; private set; } = string.Empty;
@@ -26,62 +26,119 @@ namespace DonationHup.Domain.Entites
 
         public Guid CategoryId { get; private set; }
 
+        public Category Category { get; private set; }
+
         public string? BannerFileName { get; private set; } = string.Empty;
 
         public CampaignStutes Status { get; private set; } = CampaignStutes.Active;
 
         public Guid CreatedByUserId { get; private set; } 
 
+        public DateTime UpdateAt { get; private set; }
+
         public bool IsDeleted { get; set; } = false;
         public byte[]? RowVersion { get; private set; }
-        public static Campaign Create(string titleAr, string titleEn, string descriptionAr, string descriptionEn,
-       decimal goalAmount, DateTime endDate, Guid categoryId, Guid createdByUserId, DateTime now)
+        public IReadOnlyCollection<Donation> Donations => _donations;
+
+
+        private Campaign() { }
+
+        public static Campaign Create(
+       string titleAr, string titleEn,
+       string descriptionAr, string descriptionEn,
+       decimal goalAmount, DateTime endDateUtc,
+       Guid categoryId, Guid createdByUserId,
+       DateTime nowUtc)
         {
-            var campaign = new Campaign
+            EnsureGoalIsPositive(goalAmount);          // invariant 1
+            EnsureEndDateInFuture(endDateUtc, nowUtc); // invariant 2
+
+            return new Campaign
             {
-                Id = Guid.NewGuid(),
+                ArName = titleAr,
+                EnName = titleEn,
+                ArDescription = descriptionAr,
+                EnDescription = descriptionEn,
+                GoalAmount = goalAmount,
+                RaisedAmount = 0,
+                EndTime = endDateUtc,
+                CategoryId = categoryId,
                 CreatedByUserId = createdByUserId,
-                Status = CampaignStutes.Active
+                Status = CampaignStutes.Active,
+                CreatedAt = nowUtc,
+                UpdateAt = nowUtc
+         
             };
-            campaign.Update(titleAr, titleEn, descriptionAr, descriptionEn, categoryId, goalAmount, endDate, now);
-            return campaign;
+        
         }
-        public void Update(string titleAr, string titleEn, string descriptionAr, string descriptionEn,
-        Guid categoryId, decimal goalAmount, DateTime endDate, DateTime now)
+        public void Update(
+        string titleAr, string titleEn,
+        string descriptionAr, string descriptionEn,
+        decimal goalAmount, DateTime endDateUtc,
+        Guid categoryId, DateTime nowUtc)
         {
-            if (Status != CampaignStutes.Active)
-                throw new DomainException("Campaign is not active.");
-            if (goalAmount <= 0)
-                throw new DomainException("Goal amount must be greater than zero.");
-            if (goalAmount < RaisedAmount)
-                throw new DomainException("Goal amount cannot be lower than the raised amount.");
-            if (endDate != EndTime && endDate <= now)
-                throw new DomainException("End date must be in the future.");
+            EnsureNotFinal();
+
+            EnsureGoalIsPositive(goalAmount);
+            if (goalAmount < RaisedAmount) 
+                throw new DomainException("Campaign.GoalBelowRaised", "The goal cannot be lower than the amount already raised.");
+
+            if (endDateUtc != EndTime) 
+                EnsureEndDateInFuture(endDateUtc, nowUtc);
 
             ArName = titleAr;
             EnName = titleEn;
             ArDescription = descriptionAr;
             EnDescription = descriptionEn;
-            CategoryId = categoryId;
             GoalAmount = goalAmount;
-            EndTime = endDate;
+            EndTime = endDateUtc;
+            CategoryId = categoryId;
+            UpdateAt = nowUtc;
         }
-        public bool CanAcceptDonation(DateTime now) => Status == CampaignStutes.Active && EndTime > now;
-        public void Expire(DateTime now)
+        public void EnsureCanAcceptDonation(DateTime nowUtc)
         {
-            if (Status == CampaignStutes.Active && EndTime <= now)
-                Status = CampaignStutes.Expired;
+            if (Status != CampaignStutes.Active || EndTime <= nowUtc)
+                throw new DomainException("Campaign.NotActive", "This campaign is not accepting donations.");
         }
-
-        public void SoftDelete() => IsDeleted = true;
-
-        public void SetBanner(string? fileName) => BannerFileName = fileName;
-
-        internal void AddDonation(decimal amount)
+        public void AddSucceededDonation(decimal amount, DateTime nowUtc)
         {
             RaisedAmount += amount;
+            UpdateAt = nowUtc;
+
             if (Status == CampaignStutes.Active && RaisedAmount >= GoalAmount)
                 Status = CampaignStutes.Completed;
+        }
+
+        public void MarkExpired(DateTime nowUtc)
+        {
+            EnsureNotFinal(); // invariant 8
+
+            if (EndTime > nowUtc)
+                throw new DomainException("Campaign.NotActive", "The campaign end date has not passed yet.");
+
+            Status = CampaignStutes.Expired;
+            UpdateAt = nowUtc;
+        }
+
+        public void SoftDelete(DateTime nowUtc)
+        {
+            IsDeleted = true;
+            UpdateAt = nowUtc;
+        }
+        private void EnsureNotFinal()
+        {
+            if (Status != CampaignStutes.Active)
+                throw new DomainException("Campaign.NotActive", "A completed or expired campaign cannot be changed.");
+        }
+        private static void EnsureGoalIsPositive(decimal goal)
+        {
+            if (goal <= 0)
+                throw new DomainException("Campaign.InvalidGoal", "The goal amount must be greater than zero.");
+        }
+        private static void EnsureEndDateInFuture(DateTime endDateUtc, DateTime nowUtc)
+        {
+            if (endDateUtc <= nowUtc)
+                throw new DomainException("Campaign.EndDateInPast", "The end date must be in the future.");
         }
 
     };

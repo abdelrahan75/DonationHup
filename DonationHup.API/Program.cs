@@ -1,4 +1,7 @@
 
+using DonationHub.Infrastructure.data;
+using Microsoft.EntityFrameworkCore;
+
 namespace DonationHup
 {
     public class Program
@@ -12,6 +15,8 @@ namespace DonationHup
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddDbContext<AppDbContext>(options => 
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DN")));
 
             var app = builder.Build();
 

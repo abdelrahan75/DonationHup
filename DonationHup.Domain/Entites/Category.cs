@@ -8,8 +8,10 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Domain.Entites
 {
-    public class Category : AuditableEntity
+    public class Category : Entity
     {
+        private readonly List<Campaign> _campaigns = new();
+
         public string ArName { get; private set; } = string.Empty;
 
         public string EnName { get; private set; } = string.Empty;
@@ -18,18 +20,37 @@ namespace DonationHup.Domain.Entites
 
         public string EnDescription { get; private set; } = string.Empty;
 
-        public static Category Create(string nameAr, string nameEn, string descriptionAr, string descriptionEn)
+        public DateTime UpdateAt { get; private set; }
+
+        public IReadOnlyCollection<Campaign> Campaigns => _campaigns;
+        private Category() { }
+
+
+        public static Category Create(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime nowUtc)
         {
-            var category = new Category { Id = Guid.NewGuid() };
-            category.Update(nameAr, nameEn, descriptionAr, descriptionEn);
-            return category;
+            return new Category
+            {
+                ArName = nameAr.Trim(),
+                EnName = nameEn.Trim(),
+                ArDescription = descriptionAr,
+                EnDescription  = descriptionEn,
+                CreatedAt = nowUtc,
+                UpdateAt = nowUtc
+            };
         }
-        public void Update(string nameAr, string nameEn, string descriptionAr, string descriptionEn)
+        public void Update(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime nowUtc)
         {
-            ArName = nameAr;
-            EnName = nameEn;
+            ArName = nameAr.Trim();
+            EnName = nameEn.Trim();
             ArDescription = descriptionAr;
             EnDescription = descriptionEn;
+            UpdateAt = nowUtc;
+        }
+
+        public void EnsureCanBeDeleted(bool hasCampaigns)
+        {
+            if (hasCampaigns)
+                throw new DomainException("Category.HasCampaigns", "This category still has campaigns and cannot be deleted.");
         }
 
 
