@@ -2,6 +2,7 @@
 using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using DonationHup.Application;
 
 namespace DonationHup
 {
@@ -16,7 +17,9 @@ namespace DonationHup
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
-            builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.AddInfrastructureServices(builder.Configuration);
+            builder.Services.AddApplicationServices(builder.Configuration);
+
 
             var app = builder.Build();
 
