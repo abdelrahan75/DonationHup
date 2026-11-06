@@ -1,5 +1,6 @@
 ﻿
 using DonationHub.Infrastructure.data;
+using DonationHub.Infrastructure.data.Interceptor;
 using DonationHub.Infrastructure.Repositories;
 using DonationHup.Application.Common.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,8 @@ namespace DonationHub.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DN")));
+                options.UseSqlServer(configuration.GetConnectionString("DN"))
+                       .AddInterceptors(new SoftDeleteInterceptor()));
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();

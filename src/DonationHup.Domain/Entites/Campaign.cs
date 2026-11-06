@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Domain.Entites
 {
-    public class Campaign : Entity
+    public class Campaign : Entity, ISoftDeletable
     {
         private readonly List<Donation> _donations = new();
         public string ArName { get; private set; } = string.Empty;
@@ -37,9 +37,12 @@ namespace DonationHup.Domain.Entites
         public DateTime UpdateAt { get; private set; }
 
         public bool IsDeleted { get; set; } = false;
+
+        public DateTime? DeletedAtUtc { get; set ;}
         public byte[]? RowVersion { get; private set; }
         public IReadOnlyCollection<Donation> Donations => _donations;
 
+       
 
         private Campaign() { }
 

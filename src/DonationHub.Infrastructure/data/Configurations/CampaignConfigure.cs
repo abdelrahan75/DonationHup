@@ -29,6 +29,7 @@ namespace DonationHub.Infrastructure.data.Configurations
             builder.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
 
             builder.Property(c => c.RowVersion).IsRowVersion();
+            builder.HasQueryFilter(c => !c.IsDeleted);
 
             builder.HasOne(c => c.Category)
                  .WithMany(c => c.Campaigns)
