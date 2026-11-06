@@ -19,7 +19,7 @@ namespace DonationHub.Infrastructure.Repositories
             _set = context.Set<T>();
         }
 
-        public async Task<T?> tByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
            return await _set.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         }

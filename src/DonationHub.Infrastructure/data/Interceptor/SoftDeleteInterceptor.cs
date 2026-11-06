@@ -7,9 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHub.Infrastructure.data.Interceptor
-{
-
+namespace DonationHub.Infrastructure.data.Interceptor;
     public class SoftDeleteInterceptor : SaveChangesInterceptor
     {
         public override InterceptionResult<int> SavingChanges(
@@ -40,3 +38,4 @@ namespace DonationHub.Infrastructure.data.Interceptor
             }
         }
     }
+

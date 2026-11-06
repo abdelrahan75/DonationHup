@@ -133,6 +133,9 @@ namespace DonationHub.Infrastructure.Migrations
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EnDescription")
                         .IsRequired()
                         .HasMaxLength(4000)
