@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Application.Common.Exceptions
 {
-    public class AuthException : Exception
+    public class AuthException : AppException
     {
-        public string Code { get; }
-        public int StatusCode { get; }
-
-        public AuthException(string code, string message, int statusCode) : base(message)
+        public AuthException(string code, string message, int statusCode) : base(code, message, statusCode)
         {
-            Code = code;
-            StatusCode = statusCode;
+
+       
         }
+
+
     }
+
 }

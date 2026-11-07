@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DonationHub.Infrastructure.Services;
+using DonationHup.Application.Features.Categories;
 
 namespace DonationHub.Infrastructure
 {
@@ -26,6 +28,8 @@ namespace DonationHub.Infrastructure
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();
+            services.AddScoped<ICategoryService, CategoryService>();
+
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequiredLength = 8;
@@ -39,6 +43,7 @@ namespace DonationHub.Infrastructure
                 .AddEntityFrameworkStores<AppDbContext>();
 
             services.AddScoped<IAuthService, AuthService>();
+
 
             return services;
         }
