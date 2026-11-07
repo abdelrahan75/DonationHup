@@ -1,6 +1,7 @@
 
 using DonationHub.Infrastructure;
 using DonationHub.Infrastructure.data;
+using DonationHub.Infrastructure.Identity;
 using DonationHup.API.ErrorHandling;
 using DonationHup.API.Exceptions;
 using DonationHup.Application;
@@ -10,7 +11,7 @@ namespace DonationHup
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,13 @@ namespace DonationHup
 
 
             var app = builder.Build();
+            app.UseExceptionHandler();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                await IdentitySeeder.SeedAsync(scope.ServiceProvider, app.Environment.IsDevelopment());
+            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -40,8 +48,9 @@ namespace DonationHup
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+
 
 
             app.MapControllers();

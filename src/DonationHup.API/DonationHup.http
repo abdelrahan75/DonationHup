@@ -1,6 +1,60 @@
-@DonationHup_HostAddress = http://localhost:5073
+@host = http://localhost:5073
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
 
-GET {{DonationHup_HostAddress}}/weatherforecast/
-Accept: application/json
+{ "email": "ahmed@test.com", "fullName": "Ahmed", "password": "Test@1234", "preferredLanguage": "en" }
 
+### 2) ?????? (??????? login ???? ?????? ????? ???)
+# @name login
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "ahmed@test.com", "password": "Test@1234" }
+
+### 3) ????? ?????? (?? token)
+GET {{host}}/api/v1/auth/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### 4) ????? ?????? ?? ??? token (??????? 401)
+GET {{host}}/api/v1/auth/me
+
+### 5) refresh (???? ??? refreshToken ?? ?? ??? login ?????? ??? ??? <TOKEN>)
+POST {{host}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "<TOKEN>" }
+
+### 6) ???? ??????? ???
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "ahmed@test.com", "password": "Wrong@1234" }
+
+### 7) ???? ?????? ?? ????? (???? ??? ?? ??? 6)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "nobody@test.com", "password": "Wrong@1234" }
+
+### 8) ???? ??? Admin
+# @name adminLogin
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "admin@donationhub.local", "password": "Admin@12345" }
+
+### 9) ????? ???? (Admin ??)
+POST {{host}}/api/v1/admin/staff
+Authorization: Bearer {{adminLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "email": "mgr2@test.com", "fullName": "Manager Two", "temporaryPassword": "Temp@12345", "role": "CampaignManager" }
+
+### 10) ??? ????? ?? token ??? donor (??????? 403)
+POST {{host}}/api/v1/admin/staff
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "email": "mgr3@test.com", "fullName": "Manager Three", "temporaryPassword": "Temp@12345", "role": "CampaignManager" }
+???? ??????
 ###
