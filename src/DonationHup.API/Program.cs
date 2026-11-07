@@ -4,8 +4,10 @@ using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure.Identity;
 using DonationHup.API.ErrorHandling;
 using DonationHup.API.Exceptions;
+using DonationHup.API.OpenApi;
 using DonationHup.Application;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 namespace DonationHup
 {
@@ -18,8 +20,9 @@ namespace DonationHup
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
             builder.Services.AddInfrastructureServices(builder.Configuration);
             builder.Services.AddApplicationServices(builder.Configuration);
 
@@ -44,6 +47,8 @@ namespace DonationHup
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
+
             }
 
             app.UseHttpsRedirection();

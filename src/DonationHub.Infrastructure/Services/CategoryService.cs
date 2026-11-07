@@ -3,6 +3,8 @@ using DonationHup.Application.Common.Exceptions;
 using DonationHup.Application.Common.Interfaces.Repositories;
 using DonationHup.Domain.Common;
 using DonationHup.Domain.Entites;
+using DonationHup.Application.Features.Categories;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
