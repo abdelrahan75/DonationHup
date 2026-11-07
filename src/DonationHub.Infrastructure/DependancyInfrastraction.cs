@@ -1,8 +1,10 @@
 ﻿
 using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure.data.Interceptor;
+using DonationHub.Infrastructure.Identity;
 using DonationHub.Infrastructure.Repositories;
 using DonationHup.Application.Common.Interfaces.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,19 @@ namespace DonationHub.Infrastructure
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();
+            services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.Password.RequiredLength = 8;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireDigit = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.User.RequireUniqueEmail = true;
+            })
+                .AddRoles<IdentityRole<Guid>>()
+                .AddEntityFrameworkStores<AppDbContext>();
+
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }

@@ -1,8 +1,10 @@
 
-using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure;
-using Microsoft.EntityFrameworkCore;
+using DonationHub.Infrastructure.data;
+using DonationHup.API.ErrorHandling;
+using DonationHup.API.Exceptions;
 using DonationHup.Application;
+using Microsoft.EntityFrameworkCore;
 
 namespace DonationHup
 {
@@ -20,6 +22,13 @@ namespace DonationHup
             builder.Services.AddInfrastructureServices(builder.Configuration);
             builder.Services.AddApplicationServices(builder.Configuration);
 
+            builder.Services.AddProblemDetails();
+            builder.Services.AddExceptionHandler<AuthExceptionHandler>();
+            builder.Services.AddJwtAuthentication();
+
+
+
+
 
             var app = builder.Build();
 
@@ -32,6 +41,7 @@ namespace DonationHup
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
+            app.UseAuthentication();
 
 
             app.MapControllers();

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.20" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.22" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.20">
       <PrivateAssets>all</PrivateAssets>
@@ -18,10 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\DonationHub.Infrastructure\DonationHub.Infrastructure.csproj" />
     <ProjectReference Include="..\DonationHup.Application\DonationHup.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>
