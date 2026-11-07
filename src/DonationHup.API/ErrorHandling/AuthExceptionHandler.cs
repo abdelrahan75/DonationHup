@@ -15,18 +15,18 @@ namespace DonationHup.API.ErrorHandling
 
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            if (exception is not AuthException authException)
+            if (exception is not AppException appException)
                 return false;
 
-            httpContext.Response.StatusCode = authException.StatusCode;
+            httpContext.Response.StatusCode = appException.StatusCode;
 
             var problem = new ProblemDetails
             {
-                Status = authException.StatusCode,
-                Title = authException.Code,
-                Detail = authException.Message
+                Status = appException.StatusCode,
+                Title = appException.Code,
+                Detail = appException.Message
             };
-            problem.Extensions["code"] = authException.Code;
+            problem.Extensions["code"] = appException.Code;
             problem.Extensions["traceId"] = httpContext.TraceIdentifier;
 
             return await _problemDetails.TryWriteAsync(new ProblemDetailsContext
