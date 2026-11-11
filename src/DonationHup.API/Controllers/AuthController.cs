@@ -1,5 +1,5 @@
 ﻿using DonationHup.Application.Auth;
-using DonationHup.Application.Common.Interfaces.Repositories;
+using DonationHup.Application.Features.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

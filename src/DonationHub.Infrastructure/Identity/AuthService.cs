@@ -2,6 +2,7 @@
 using DonationHup.Application.Auth;
 using DonationHup.Application.Common.Exceptions;
 using DonationHup.Application.Common.Interfaces.Repositories;
+using DonationHup.Application.Features.Auth;
 using DonationHup.Application.Optians;
 using DonationHup.Domain.Common;
 using DonationHup.Domain.Entites;

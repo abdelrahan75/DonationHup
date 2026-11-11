@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DonationHub.Infrastructure.Services;
 using DonationHup.Application.Features.Categories;
+using DonationHup.Application.Features.Auth;
 
 namespace DonationHub.Infrastructure
 {
@@ -28,7 +29,7 @@ namespace DonationHub.Infrastructure
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();
-            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             services.AddIdentityCore<ApplicationUser>(options =>
             {

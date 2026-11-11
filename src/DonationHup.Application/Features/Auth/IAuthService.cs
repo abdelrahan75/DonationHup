@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Application.Common.Interfaces.Repositories
+namespace DonationHup.Application.Features.Auth
 {
     public interface IAuthService
     {
