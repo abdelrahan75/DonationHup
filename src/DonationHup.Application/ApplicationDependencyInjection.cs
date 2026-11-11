@@ -1,4 +1,6 @@
-﻿using DonationHup.Application.Optians;
+﻿using DonationHup.Application.Features.Categories;
+using DonationHup.Application.Features.Categories.InterfacesCategory;
+using DonationHup.Application.Optians;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,6 +15,7 @@ namespace DonationHup.Application
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddScoped<ICategoryService, CategoryService>();
             services.AddOptions<JwtOptians>()
                 .Bind(configuration.GetSection(JwtOptians.SectionName))
                 .ValidateDataAnnotations()

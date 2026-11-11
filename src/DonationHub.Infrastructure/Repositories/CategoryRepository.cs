@@ -1,5 +1,6 @@
 ﻿using DonationHub.Infrastructure.data;
-using DonationHup.Application.Features.Categories;
+using DonationHup.Application.Features.Categories.ImplementCategory;
+using DonationHup.Application.Features.Categories.InterfacesCategory;
 using DonationHup.Domain.Entites;
 using Microsoft.EntityFrameworkCore;
 using System;

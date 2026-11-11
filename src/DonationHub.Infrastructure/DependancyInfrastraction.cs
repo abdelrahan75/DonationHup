@@ -14,8 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DonationHub.Infrastructure;
-using DonationHup.Application.Features.Categories;
 using DonationHup.Application.Features.Auth;
+using DonationHup.Application.Common.Interfaces;
+using DonationHup.Application.Features.Categories.InterfacesCategory;
 
 namespace DonationHub.Infrastructure
 {

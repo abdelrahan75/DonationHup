@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Application.Common.Interfaces.Repositories
+namespace DonationHup.Application.Common.Interfaces
 {
     public interface IUnitofWork
     {

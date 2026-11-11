@@ -1,5 +1,5 @@
 ﻿using DonationHub.Infrastructure.data;
-using DonationHup.Application.Common.Interfaces.Repositories;
+using DonationHup.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
