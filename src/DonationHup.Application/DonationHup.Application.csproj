@@ -18,8 +18,4 @@
     <ProjectReference Include="..\DonationHup.Domain\DonationHup.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>
