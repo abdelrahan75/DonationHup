@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Application.Features.Categories.ImplementCategory
+namespace DonationHup.Application.Features.Categories
 {
     public class CategoryRequest
     {

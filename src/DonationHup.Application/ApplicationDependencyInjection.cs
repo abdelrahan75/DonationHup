@@ -1,5 +1,4 @@
 ﻿using DonationHup.Application.Features.Categories;
-using DonationHup.Application.Features.Categories.InterfacesCategory;
 using DonationHup.Application.Optians;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

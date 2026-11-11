@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DonationHup.Application.Auth
+namespace DonationHup.Application.Features.Auth
 {
     public class RegisterRequest
     {

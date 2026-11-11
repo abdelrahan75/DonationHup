@@ -3,7 +3,7 @@ using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure.data.Interceptor;
 using DonationHub.Infrastructure.Identity;
 using DonationHub.Infrastructure.Repositories;
-using DonationHup.Application.Common.Interfaces.Repositories;
+using DonationHup.Application.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 using DonationHub.Infrastructure;
 using DonationHup.Application.Features.Auth;
 using DonationHup.Application.Common.Interfaces;
-using DonationHup.Application.Features.Categories.InterfacesCategory;
+using DonationHup.Application.Features.Categories;
 
 namespace DonationHub.Infrastructure
 {

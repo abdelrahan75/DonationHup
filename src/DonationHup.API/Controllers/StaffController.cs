@@ -1,4 +1,4 @@
-﻿using DonationHup.Application.Auth;
+﻿using DonationHup.Application;
 using DonationHup.Application.Features.Auth;
 using DonationHup.Domain.Common;
 using Microsoft.AspNetCore.Authorization;

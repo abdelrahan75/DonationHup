@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DonationHup.Application.Common.Interfaces.Repositories;
+using DonationHup.Application.Common;
+using DonationHup.Application.Common.Interfaces;
 namespace DonationHub.Infrastructure.Repositories
 {
     public class GenaricRepository<T> : IGenericRepository<T> where T : Entity
