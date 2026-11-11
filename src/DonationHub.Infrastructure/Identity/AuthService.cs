@@ -53,11 +53,9 @@ namespace DonationHub.Infrastructure.Identity
         {
             var user = await _users.FindByEmailAsync(request.Email.Trim());
 
-            // نفس الخطأ للإيميل الغلط والباسورد الغلط (مفيش user enumeration)
             if (user is null || !await _users.CheckPasswordAsync(user, request.Password))
                 throw new AuthException("Auth.InvalidCredentials", "Invalid email or password.", 401);
 
-            // الـ 403 بس لما الباسورد صح والحساب متعطّل
             if (!user.IsActive)
                 throw new AuthException("Auth.AccountDeactivated", "This account is deactivated.", 403);
 
@@ -124,13 +122,11 @@ namespace DonationHub.Infrastructure.Identity
             return ToProfile(user, new List<string> { role });
         }
 
-        // بيعمل access + refresh token جداد. لو فيه refresh token قديم (rotation) بيتلغي ويتربط بالجديد،
-        // وكل ده بيتحفظ بـ CompleteAsync واحدة.
+      
         private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user, RefreshToken? oldToken)
         {
             var now = DateTime.UtcNow;
 
-            // 1) Access token (JWT): claims = user id (sub) + email + role لكل دور
             var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -145,7 +141,6 @@ namespace DonationHub.Infrastructure.Identity
                 new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
             var accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-            // 2) Refresh token: random 64 byte بيترجّع للعميل مرة واحدة، والمخزّن في الـ database هو الـ hash بس
             var plainRefreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
             var newToken = RefreshToken.Create(user.Id, Hash(plainRefreshToken), now, TimeSpan.FromDays(_jwt.RefreshTokenExpiryDays));
 

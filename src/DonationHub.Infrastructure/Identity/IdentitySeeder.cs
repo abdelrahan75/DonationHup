@@ -39,7 +39,6 @@ namespace DonationHub.Infrastructure.Identity
             await EnsureDevUserAsync(userManager, config, "Manager", Roles.CampaignManager);
             await EnsureDevUserAsync(userManager, config, "Donor", Roles.Donor);
 
-            // 4) خمس تصنيفات
             if (!await context.Categories.AnyAsync())
             {
                 var now = DateTime.UtcNow;
