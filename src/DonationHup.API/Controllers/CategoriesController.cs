@@ -1,51 +1,34 @@
-﻿using DonationHup.Application.Features.Categories;
+﻿using DonationHup.Application.Features.Categories.Commend.CreateCategory;
+using DonationHup.Application.Features.Categories.Quey.GetCategories;
+using DonationHup.Application.Features.Categories.Quey.GetCategorieById;
 using DonationHup.Domain.Common;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace DonationHup.API.Controllers
 {
-    [ApiController]
-    [Route("api/v1/categories")]
-    public class CategoriesController : ControllerBase
+    [System.Web.Http.Route("api/v1/categories")]
+    public class CategoriesController : ApiController 
     {
-        private readonly ICategoryService _categories;
-
-        public CategoriesController(ICategoryService categories)
-        {
-            _categories = categories;
-        }
-
+        public CategoriesController(ISender sender) : base(sender) { }
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> GetAll() =>
-            Ok(await _categories.GetAllAsync());
+        public async Task<IActionResult> GetAll(CancellationToken ct) =>
+            Handle(await Sender.Send(new GetCategoriesQuery(), ct));
 
         [AllowAnonymous]
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetById(Guid id) =>
-            Ok(await _categories.GetByIdAsync(id));
+        public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
+             Handle(await Sender.Send(new GetCategoryByIdQuary(id), ct));
+
 
         [Authorize(Roles = Roles.Admin)]
         [HttpPost]
-        public async Task<IActionResult> Create(CategoryRequest request)
-        {
-            var category = await _categories.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
-        }
-
-        [Authorize(Roles = Roles.Admin)]
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, CategoryRequest request) =>
-            Ok(await _categories.UpdateAsync(id, request));
-
-        [Authorize(Roles = Roles.Admin)]
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _categories.DeleteAsync(id);
-            return NoContent();
-        }
+        public async Task<IActionResult> Create(CreateCategoryCommend command, CancellationToken ct) =>
+            Handle(await Sender.Send(command, ct),
+                category => CreatedAtAction(nameof(GetById), new { id = category.Id }, category));
     }
 
 }

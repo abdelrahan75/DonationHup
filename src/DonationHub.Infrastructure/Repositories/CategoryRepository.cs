@@ -32,7 +32,6 @@ namespace DonationHub.Infrastructure.Repositories
         public Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId) =>
             _context.Categories.AnyAsync(c => c.Id != excludeId && c.EnName == nameEn);
 
-        // IgnoreQueryFilters: الحملة المحذوفة soft لسه بتشاور على التصنيف (FK)، فلازم تتحسب
         public Task<bool> HasCampaignsAsync(Guid categoryId) =>
             _context.Campaigns.IgnoreQueryFilters().AnyAsync(c => c.CategoryId == categoryId);
     }

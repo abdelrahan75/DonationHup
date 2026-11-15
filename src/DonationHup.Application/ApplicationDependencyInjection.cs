@@ -1,12 +1,15 @@
-﻿using DonationHup.Application.Features.Categories;
+﻿using DonationHup.Application.Common.Behavior;
+using DonationHup.Application.Features.Categories;
 using DonationHup.Application.Optians;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 
 namespace DonationHup.Application
 {
@@ -14,7 +17,16 @@ namespace DonationHup.Application
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(ApplicationDependencyInjection).Assembly);
+                cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            });
+
+            services.AddValidatorsFromAssembly(typeof(ApplicationDependencyInjection).Assembly);
+
+            services.TryAddSingleton(TimeProvider.System);
+
             services.AddOptions<JwtOptians>()
                 .Bind(configuration.GetSection(JwtOptians.SectionName))
                 .ValidateDataAnnotations()

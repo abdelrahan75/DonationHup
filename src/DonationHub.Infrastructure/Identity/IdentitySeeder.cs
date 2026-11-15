@@ -1,4 +1,5 @@
-﻿using DonationHub.Infrastructure.data;
+﻿using DonationHub.Infrastructure;
+using DonationHub.Infrastructure.data;
 using DonationHup.Application.Optians;
 using DonationHup.Domain.Common;
 using DonationHup.Domain.Entites;
@@ -67,16 +68,8 @@ namespace DonationHub.Infrastructure.Identity
         {
             if (await userManager.FindByEmailAsync(email) is not null) return;
 
-            var user = new ApplicationUser
-            {
-                Id = Guid.NewGuid(),
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true,
-                FullName = fullName,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
+            var user = ApplicationUser.Create(email, fullName, "en", DateTime.UtcNow);
+            user.EmailConfirmed = true;
 
             var result = await userManager.CreateAsync(user, password);
             if (!result.Succeeded)

@@ -106,15 +106,15 @@ namespace DonationHub.Infrastructure.Identity
             if (await _users.FindByEmailAsync(email) is not null)
                 throw new AuthException("Auth.EmailAlreadyExists", "This email is already registered.", 409);
 
-            var user = new ApplicationUser
+            ApplicationUser user;
+            try
             {
-                Id = Guid.NewGuid(),
-                UserName = email,
-                Email = email,
-                FullName = fullName.Trim(),
-                PreferredLanguage = preferredLanguage,
-                CreatedAt = DateTime.UtcNow
-            };
+                user = ApplicationUser.Create(email, fullName, preferredLanguage, DateTime.UtcNow);
+            }
+            catch (DomainException ex)
+            {
+                throw new AuthException(ex.Code, ex.Message, 400);
+            }
 
             var result = await _users.CreateAsync(user, password);
             if (!result.Succeeded)
@@ -124,7 +124,7 @@ namespace DonationHub.Infrastructure.Identity
             return ToProfile(user, new List<string> { role });
         }
 
-      
+
         private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user, RefreshToken? oldToken)
         {
             var now = DateTime.UtcNow;
