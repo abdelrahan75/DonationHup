@@ -38,7 +38,6 @@ namespace DonationHup.Application.Common.Behavior
                 .GroupBy(f => f.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).Distinct().ToArray());
 
-            // بنبني Result.Failure(error) (أو Result<T>.Failure(error)) من النوع المطلوب
             var failure = typeof(TResponse).GetMethod(nameof(Result.Failure), new[] { typeof(Results.Error) })!;
             return (TResponse)failure.Invoke(null, new object[] { new Results.ValidationError(errors) })!;
         }

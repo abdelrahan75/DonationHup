@@ -6,22 +6,26 @@ namespace DonationHup.Application.Features.Categories.Quey.GetCategories
 {
     public class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, Result<List<CategoryDto>>>
     {
-    private readonly IAppDbContext _db;
+    private readonly IAppDbContext appDbContext;
 
-    public GetCategoriesQueryHandler(IAppDbContext db)
+    public GetCategoriesQueryHandler(IAppDbContext dbContext)
     {
-        _db = db;
+        appDbContext = dbContext;
     }
 
         public async Task<Result<List<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
         {
-        var query = _db.Categories
-            .OrderBy(c => c.EnName)
+            var query = appDbContext.Categories
+                .OrderBy(c => c.Id)
             .Select(c => new CategoryDto(c.Id, c.ArName, c.EnName, c.ArDescription, c.EnDescription));
 
-        var categories = await _db.ToListAsync(query, cancellationToken);
+            var catogeries = await appDbContext.ToListAsync(query, cancellationToken=default);
+            return Result.Success(catogeries);
 
-        return Result.Success(categories);
+   
+      
+        
+        }
+   
     }
-}
 }

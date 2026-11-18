@@ -1,6 +1,8 @@
 ﻿using DonationHup.Application.Features.Categories.Commend.CreateCategory;
-using DonationHup.Application.Features.Categories.Quey.GetCategories;
+using DonationHup.Application.Features.Categories.Commend.DeleteCategory;
+using DonationHup.Application.Features.Categories.Commend.UpdateCategory;
 using DonationHup.Application.Features.Categories.Quey.GetCategorieById;
+using DonationHup.Application.Features.Categories.Quey.GetCategories;
 using DonationHup.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -29,6 +31,17 @@ namespace DonationHup.API.Controllers
         public async Task<IActionResult> Create(CreateCategoryCommend command, CancellationToken ct) =>
             Handle(await Sender.Send(command, ct),
                 category => CreatedAtAction(nameof(GetById), new { id = category.Id }, category));
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, UpdateCategoryCommend command, CancellationToken ct) =>
+           Handle(await Sender.Send(command with { Id = id }, ct));
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
+            Handle(await Sender.Send(new DeleteCategoryCommend(id), ct));
+
     }
 
 }

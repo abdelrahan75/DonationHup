@@ -26,13 +26,13 @@ namespace DonationHub.Infrastructure.Repositories
                 .Select(c => new CategoryDto(c.Id, c.ArName, c.EnName, c.ArDescription, c.EnDescription))
                 .ToListAsync();
 
-        public Task<bool> ArNameExistsAsync(string nameAr, Guid excludeId) =>
+        public Task<bool> ArNameExistsAsync(string nameAr, Guid excludeId, CancellationToken cancellationToken = default) =>
             _context.Categories.AnyAsync(c => c.Id != excludeId && c.ArName == nameAr);
 
-        public Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId) =>
+        public Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId, CancellationToken cancellationToken = default) =>
             _context.Categories.AnyAsync(c => c.Id != excludeId && c.EnName == nameEn);
 
-        public Task<bool> HasCampaignsAsync(Guid categoryId) =>
+        public Task<bool> HasCampaignsAsync(Guid categoryId, CancellationToken cancellationToken = default) =>
             _context.Campaigns.IgnoreQueryFilters().AnyAsync(c => c.CategoryId == categoryId);
     }
 

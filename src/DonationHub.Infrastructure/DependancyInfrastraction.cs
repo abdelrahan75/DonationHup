@@ -30,6 +30,7 @@ namespace DonationHub.Infrastructure
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();
+            services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>()); 
             services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             services.AddIdentityCore<ApplicationUser>(options =>
