@@ -1,9 +1,13 @@
 ﻿using DonationHub.Infrastructure.data;
-using DonationHup.Application;
-using DonationHup.Application.Common.Exceptions;
+using DonationHup.Application.Common.Results;
 using DonationHup.Application.Common.Interfaces;
 
 using DonationHup.Application.Features.Auth;
+using DonationHup.Application.Features.Auth.CreateStaff;
+using DonationHup.Application.Features.Auth.Login;
+using DonationHup.Application.Features.Auth.Logout;
+using DonationHup.Application.Features.Auth.Refresh;
+using DonationHup.Application.Features.Auth.Register;
 using DonationHup.Application.Optians;
 using DonationHup.Domain.Common;
 using DonationHup.Domain.Entites;
@@ -30,110 +34,120 @@ namespace DonationHub.Infrastructure.Identity
         private readonly IGenericRepository<RefreshToken> _refreshTokens;
         private readonly IUnitofWork _unitOfWork;
         private readonly JwtOptians _jwt;
+        private readonly TimeProvider _time;
 
         public AuthService(
             UserManager<ApplicationUser> users,
             AppDbContext context,
             IGenericRepository<RefreshToken> refreshTokens,
             IUnitofWork unitOfWork,
-            IOptions<JwtOptians> jwtOptions)
+            IOptions<JwtOptians> jwtOptions,
+            TimeProvider time)
         {
             _users = users;
             _context = context;
             _refreshTokens = refreshTokens;
             _unitOfWork = unitOfWork;
             _jwt = jwtOptions.Value;
+            _time = time;
         }
 
-        public Task<UserProfileDto> RegisterAsync(RegisterRequest request) =>
-            CreateUserAsync(request.Email, request.FullName, request.Password, request.PreferredLanguage, Roles.Donor);
+        public Task<Result<UserProfileDto>> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken) =>
+            CreateUserAsync(command.Email, command.FullName, command.Password, command.PreferredLanguage, Roles.Donor);
 
-        public Task<UserProfileDto> CreateStaffAsync(CreateStaffRequest request) =>
-            CreateUserAsync(request.Email, request.FullName, request.TemporaryPassword, request.PreferredLanguage, request.Role);
+        public Task<Result<UserProfileDto>> CreateStaffAsync(CreateStaffCommand command, CancellationToken cancellationToken) =>
+            CreateUserAsync(command.Email, command.FullName, command.TemporaryPassword, command.PreferredLanguage, command.Role);
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        public async Task<Result<AuthResponse>> LoginAsync(LoginCommand command, CancellationToken cancellationToken)
         {
-            var user = await _users.FindByEmailAsync(request.Email.Trim());
+            var user = await _users.FindByEmailAsync(command.Email.Trim());
 
-            if (user is null || !await _users.CheckPasswordAsync(user, request.Password))
-                throw new AuthException("Auth.InvalidCredentials", "Invalid email or password.", 401);
+            // نفس الخطأ للإيميل الغلط والباسورد الغلط (IDN-12)
+            if (user is null || !await _users.CheckPasswordAsync(user, command.Password))
+                return Result.Failure<AuthResponse>(AuthErrors.InvalidCredentials);
 
             if (!user.IsActive)
-                throw new AuthException("Auth.AccountDeactivated", "This account is deactivated.", 403);
+                return Result.Failure<AuthResponse>(AuthErrors.AccountDeactivated);
 
-            return await CreateTokensAsync(user, null);
+            return Result.Success(await CreateTokensAsync(user, null, cancellationToken));
         }
 
-        public async Task<AuthResponse> RefreshAsync(string refreshToken)
+        public async Task<Result<AuthResponse>> RefreshAsync(RefreshTokenCommand command, CancellationToken cancellationToken)
         {
-            var hash = Hash(refreshToken);
-            var stored = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash);
+            var hash = Hash(command.RefreshToken);
+            var stored = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash, cancellationToken);
             var user = stored is null ? null : await _users.FindByIdAsync(stored.UserId.ToString());
 
-            if (stored is null || user is null || stored.RevokedAt is not null || stored.ExpiresAt <= DateTime.UtcNow)
-                throw new AuthException("Auth.RefreshTokenInvalid", "The refresh token is invalid, expired or revoked.", 401);
+            if (stored is null || user is null || stored.RevokedAt is not null || stored.ExpiresAt <= Now)
+                return Result.Failure<AuthResponse>(AuthErrors.RefreshTokenInvalid);
 
             if (!user.IsActive)
-                throw new AuthException("Auth.AccountDeactivated", "This account is deactivated.", 403);
+                return Result.Failure<AuthResponse>(AuthErrors.AccountDeactivated);
 
-            return await CreateTokensAsync(user, stored);
+            return Result.Success(await CreateTokensAsync(user, stored, cancellationToken));
         }
 
-        public async Task LogoutAsync(Guid userId, string refreshToken)
+        public async Task<Result> LogoutAsync(LogoutCommand command, CancellationToken cancellationToken)
         {
-            var hash = Hash(refreshToken);
-            var stored = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash && t.UserId == userId);
+            var hash = Hash(command.RefreshToken);
+            var stored = await _context.RefreshTokens
+                .FirstOrDefaultAsync(t => t.TokenHash == hash && t.UserId == command.UserId, cancellationToken);
 
-            if (stored is null || stored.RevokedAt is not null) return;
+            if (stored is null || stored.RevokedAt is not null)
+                return Result.Success();
 
-            stored.Revoke(DateTime.UtcNow);
-            await _unitOfWork.CompleteAsync();
+            stored.Revoke(Now);
+            await _unitOfWork.CompleteAsync(cancellationToken);
+            return Result.Success();
         }
 
-        public async Task<UserProfileDto> GetProfileAsync(Guid userId)
+        public async Task<Result<UserProfileDto>> GetProfileAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _users.FindByIdAsync(userId.ToString())
-                ?? throw new AuthException("Auth.UserNotFound", "User not found.", 401);
+            var user = await _users.FindByIdAsync(userId.ToString());
+            if (user is null)
+                return Result.Failure<UserProfileDto>(AuthErrors.UserNotFound);
 
-            return ToProfile(user, await _users.GetRolesAsync(user));
+            return Result.Success(ToProfile(user, await _users.GetRolesAsync(user)));
         }
 
-        private async Task<UserProfileDto> CreateUserAsync(
-            string email, string fullName, string password, string preferredLanguage, string role)
+        private DateTime Now => _time.GetUtcNow().UtcDateTime;
+
+        private async Task<Result<UserProfileDto>> CreateUserAsync(
+            string email, string fullName, string password, string? preferredLanguage, string role)
         {
             email = email.Trim();
 
             if (await _users.FindByEmailAsync(email) is not null)
-                throw new AuthException("Auth.EmailAlreadyExists", "This email is already registered.", 409);
+                return Result.Failure<UserProfileDto>(AuthErrors.EmailAlreadyExists);
 
             ApplicationUser user;
             try
             {
-                user = ApplicationUser.Create(email, fullName, preferredLanguage, DateTime.UtcNow);
+                user = ApplicationUser.Create(email, fullName, preferredLanguage, Now);
             }
             catch (DomainException ex)
             {
-                throw new AuthException(ex.Code, ex.Message, 400);
+                return Result.Failure<UserProfileDto>(AuthErrors.RegistrationFailed(ex.Message));
             }
 
             var result = await _users.CreateAsync(user, password);
             if (!result.Succeeded)
-                throw new AuthException("Auth.RegistrationFailed", string.Join(" ", result.Errors.Select(e => e.Description)), 400);
+                return Result.Failure<UserProfileDto>(
+                    AuthErrors.RegistrationFailed(string.Join(" ", result.Errors.Select(e => e.Description))));
 
             await _users.AddToRoleAsync(user, role);
-            return ToProfile(user, new List<string> { role });
+            return Result.Success(ToProfile(user, new List<string> { role }));
         }
 
-
-        private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user, RefreshToken? oldToken)
+        private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user, RefreshToken? oldToken, CancellationToken cancellationToken)
         {
-            var now = DateTime.UtcNow;
+            var now = Now;
 
             var claims = new List<Claim>
-        {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email!)
-        };
+            {
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new(JwtRegisteredClaimNames.Email, user.Email!)
+            };
             foreach (var role in await _users.GetRolesAsync(user))
                 claims.Add(new Claim("role", role));
 
@@ -146,9 +160,9 @@ namespace DonationHub.Infrastructure.Identity
             var plainRefreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
             var newToken = RefreshToken.Create(user.Id, Hash(plainRefreshToken), now, TimeSpan.FromDays(_jwt.RefreshTokenExpiryDays));
 
-            await _refreshTokens.AddAsync(newToken);
+            await _refreshTokens.AddAsync(newToken, cancellationToken);
             oldToken?.Revoke(now, newToken.Id);
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.CompleteAsync(cancellationToken);
 
             return new AuthResponse(accessToken, plainRefreshToken, expires);
         }
@@ -159,5 +173,5 @@ namespace DonationHub.Infrastructure.Identity
         private static UserProfileDto ToProfile(ApplicationUser user, IList<string> roles) =>
             new(user.Id, user.Email!, user.FullName, user.PreferredLanguage, user.IsActive, roles, user.CreatedAt);
     }
-
 }
+

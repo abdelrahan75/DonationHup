@@ -1,4 +1,10 @@
 ﻿using DonationHup.Application;
+using DonationHup.Application.Common.Results;
+using DonationHup.Application.Features.Auth.CreateStaff;
+using DonationHup.Application.Features.Auth.Login;
+using DonationHup.Application.Features.Auth.Logout;
+using DonationHup.Application.Features.Auth.Refresh;
+using DonationHup.Application.Features.Auth.Register;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +15,11 @@ namespace DonationHup.Application.Features.Auth
 {
     public interface IAuthService
     {
-        Task<UserProfileDto> RegisterAsync(RegisterRequest request);
-        Task<UserProfileDto> CreateStaffAsync(CreateStaffRequest request);
-        Task<AuthResponse> LoginAsync(LoginRequest request);
-        Task<AuthResponse> RefreshAsync(string refreshToken);
-        Task LogoutAsync(Guid userId, string refreshToken);
-        Task<UserProfileDto> GetProfileAsync(Guid userId);
+        Task<Result<UserProfileDto>> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken);
+        Task<Result<UserProfileDto>> CreateStaffAsync(CreateStaffCommand command, CancellationToken cancellationToken);
+        Task<Result<AuthResponse>> LoginAsync(LoginCommand command, CancellationToken cancellationToken);
+        Task<Result<AuthResponse>> RefreshAsync(RefreshTokenCommand command, CancellationToken cancellationToken);
+        Task<Result> LogoutAsync(LogoutCommand command, CancellationToken cancellationToken);
+        Task<Result<UserProfileDto>> GetProfileAsync(Guid userId, CancellationToken cancellationToken);
     }
 }

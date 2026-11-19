@@ -1,12 +1,16 @@
 ﻿using DonationHup.Application;
 using DonationHup.Application.Features.Auth;
+using DonationHup.Application.Features.Auth.GetCurrentUser;
+using DonationHup.Application.Features.Auth.Login;
+using DonationHup.Application.Features.Auth.Logout;
+using DonationHup.Application.Features.Auth.Refresh;
+using DonationHup.Application.Features.Auth.Register;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DonationHup.API.Controllers
 {
-    [ApiController]
     [Route("api/v1/auth")]
     public class AuthController : ApiController
     {
@@ -37,5 +41,4 @@ namespace DonationHup.API.Controllers
         public async Task<IActionResult> Me(CancellationToken ct) =>
             Handle(await Sender.Send(new GetCurrentUserQuery(CurrentUserId), ct));
     }
-
-}
+    }
