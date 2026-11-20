@@ -59,7 +59,7 @@ namespace DonationHup
 
 
             app.MapControllers();
-
+            
             app.Run();
         }
     }
