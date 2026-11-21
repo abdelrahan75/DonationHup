@@ -19,21 +19,14 @@ namespace DonationHub.Infrastructure.Repositories
             _context = context;
         }
 
-        public Task<List<CategoryDto>> GetAllDtosAsync() =>
-            _context.Categories
-                .AsNoTracking()
-                .OrderBy(c => c.EnName)
-                .Select(c => new CategoryDto(c.Id, c.ArName, c.EnName, c.ArDescription, c.EnDescription))
-                .ToListAsync();
-
         public Task<bool> ArNameExistsAsync(string nameAr, Guid excludeId, CancellationToken cancellationToken = default) =>
-            _context.Categories.AnyAsync(c => c.Id != excludeId && c.ArName == nameAr);
+            _context.Categories.AnyAsync(c => c.Id != excludeId && c.ArName == nameAr, cancellationToken);
 
         public Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId, CancellationToken cancellationToken = default) =>
-            _context.Categories.AnyAsync(c => c.Id != excludeId && c.EnName == nameEn);
+            _context.Categories.AnyAsync(c => c.Id != excludeId && c.EnName == nameEn, cancellationToken);
 
         public Task<bool> HasCampaignsAsync(Guid categoryId, CancellationToken cancellationToken = default) =>
-            _context.Campaigns.IgnoreQueryFilters().AnyAsync(c => c.CategoryId == categoryId);
+            _context.Campaigns.IgnoreQueryFilters().AnyAsync(c => c.CategoryId == categoryId, cancellationToken);
     }
 
 }

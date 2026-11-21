@@ -6,8 +6,10 @@ using DonationHup.API.ErrorHandling;
 using DonationHup.API.Exceptions;
 using DonationHup.API.OpenApi;
 using DonationHup.Application;
+using DonationHup.Application.Common.Results;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 
 namespace DonationHup
 {
@@ -19,7 +21,18 @@ namespace DonationHup
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+                .ConfigureApiBehaviorOptions(o =>
+                    o.InvalidModelStateResponseFactory = ctx =>
+                    {
+                        var errors = ctx.ModelState
+                            .Where(e => e.Value!.Errors.Count > 0)
+                            .ToDictionary(
+                                e => e.Key,
+                                e => e.Value!.Errors.Select(x => string.IsNullOrEmpty(x.ErrorMessage) ? "The value is invalid." : x.ErrorMessage).ToArray());
+                        return ProblemFactory.Create(ctx.HttpContext, new ValidationError(errors));
+                    });
             builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -27,7 +40,7 @@ namespace DonationHup
             builder.Services.AddApplicationServices(builder.Configuration);
 
             builder.Services.AddProblemDetails();
-            builder.Services.AddExceptionHandler<AuthExceptionHandler>();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddJwtAuthentication();
 
 
@@ -59,7 +72,7 @@ namespace DonationHup
 
 
             app.MapControllers();
-            
+
             app.Run();
         }
     }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
 {
-    public class CreateCampaignCommandHandler : IRequestHandler<CreateCampaignCommand, Result<CampaignDto>>
+    public class CreateCampaignCommandHandler : IRequestHandler<CreateCampaignCommand, Result<CampaignAdminDto>>
     {
         private readonly IGenericRepository<Campaign> _campaigns;
         private readonly IGenericRepository<Category> _categories;
@@ -31,10 +31,10 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
             _time = time;
         }
 
-        public async Task<Result<CampaignDto>> Handle(CreateCampaignCommand request, CancellationToken cancellationToken)
+        public async Task<Result<CampaignAdminDto>> Handle(CreateCampaignCommand request, CancellationToken cancellationToken)
         {
             if (await _categories.GetByIdAsync(request.CategoryId, cancellationToken) is null)
-                return Result.Failure<CampaignDto>(CategoryErrors.NotFound);
+                return Result.Failure<CampaignAdminDto>(CategoryErrors.NotFound);
 
             Campaign campaign;
             try
@@ -46,15 +46,13 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
             }
             catch (DomainException ex)
             {
-                return Result.Failure<CampaignDto>(new Error(ex.Code, ex.Message, ErrorType.UnprocessableEntity));
+                return Result.Failure<CampaignAdminDto>(CampaignErrors.FromDomain(ex));
             }
 
             await _campaigns.AddAsync(campaign, cancellationToken);
             await _unitOfWork.CompleteAsync(cancellationToken);
 
-            return Result.Success(new CampaignDto(
-                campaign.Id, campaign.ArName, campaign.EnName, campaign.ArDescription, campaign.EnDescription,
-                campaign.GoalAmount, campaign.RaisedAmount, campaign.EndTime, campaign.CategoryId, campaign.Status));
+            return Result.Success(CampaignMapping.ToAdmin(campaign));
         }
     }
 }

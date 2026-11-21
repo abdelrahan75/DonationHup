@@ -24,9 +24,9 @@ namespace DonationHub.Infrastructure
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DN"))
-                       .AddInterceptors(new SoftDeleteInterceptor()));
+            services.AddDbContext<AppDbContext>((sp, options) =>
+                 options.UseSqlServer(configuration.GetConnectionString("DN"))
+                        .AddInterceptors(new SoftDeleteInterceptor(sp.GetRequiredService<TimeProvider>())));
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenaricRepository<>));
             services.AddScoped<IUnitofWork, UnitOfWork>();

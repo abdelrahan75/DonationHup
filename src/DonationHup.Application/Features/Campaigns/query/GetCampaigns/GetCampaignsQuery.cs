@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Application.Features.Campaigns.query.GetCampaigns
 {
-    public record GetCampaignsQuery : IRequest<Result<List<CampaignDto>>>
+    public record GetCampaignsQuery(string? Language = null) : IRequest<Result<List<CampaignDto>>>
     {
     }
 }

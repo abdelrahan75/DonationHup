@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DonationHup.API.Controllers
 {
-    [System.Web.Http.Route("api/v1/categories")]
+    [Route("api/v1/categories")]
     public class CategoriesController : ApiController 
     {
         public CategoriesController(ISender sender) : base(sender) { }

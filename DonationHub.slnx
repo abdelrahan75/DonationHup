@@ -6,4 +6,11 @@
     <Project Path="src/DonationHup.Domain/DonationHup.Domain.csproj" />
   </Folder>
   <Folder Name="/test/" />
+  <Folder Name="/test/DonationHub.UnitTests/">
+    <File Path="CampaignDomainTests.cs" />
+    <File Path="CampaignMappingTests.cs" />
+    <File Path="HandlerTests.cs" />
+    <File Path="TestHelpers.cs" />
+    <File Path="ValidatorTests.cs" />
+  </Folder>
 </Solution>

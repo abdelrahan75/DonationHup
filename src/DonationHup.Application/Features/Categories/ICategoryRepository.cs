@@ -11,10 +11,9 @@ namespace DonationHup.Application.Features.Categories
 {
     public interface ICategoryRepository : IGenericRepository<Category>
     {
-        Task<List<CategoryDto>> GetAllDtosAsync();                         
-        Task<bool> ArNameExistsAsync(string nameAr, Guid excludeId, CancellationToken cancellationToken = default);        
-        Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId, CancellationToken cancellationToken = default);        
-        Task<bool> HasCampaignsAsync(Guid categoryId, CancellationToken cancellationToken = default);        
-        
+        Task<bool> ArNameExistsAsync(string nameAr, Guid excludeId, CancellationToken cancellationToken = default);
+        Task<bool> EnNameExistsAsync(string nameEn, Guid excludeId, CancellationToken cancellationToken = default);
+        Task<bool> HasCampaignsAsync(Guid categoryId, CancellationToken cancellationToken = default);
+
     }
 }

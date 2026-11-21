@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace DonationHup.Application.Features.Campaigns.query.GetCampaignById
 {
-    public record GetCampaignByIdQuery(Guid id) : IRequest<Result<CampaignDto>>
+    public record GetCampaignByIdQuery(Guid id, string? Language = null) : IRequest<Result<CampaignDetailsDto>>
+
     {
     }
 }

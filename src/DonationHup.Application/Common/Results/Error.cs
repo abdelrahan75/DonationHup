@@ -13,7 +13,9 @@ namespace DonationHup.Application.Common.Results
         Forbidden,
         NotFound,
         Conflict,
+        PayloadTooLarge,
         UnprocessableEntity,
+        TooManyRequests,
         Failure
     }
 

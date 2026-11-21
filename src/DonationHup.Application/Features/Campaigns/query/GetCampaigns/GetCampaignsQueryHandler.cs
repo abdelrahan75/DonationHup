@@ -18,16 +18,18 @@ namespace DonationHup.Application.Features.Campaigns.query.GetCampaigns
         {
             _db = db;
         }
+
         public async Task<Result<List<CampaignDto>>> Handle(GetCampaignsQuery request, CancellationToken cancellationToken)
         {
-           var query = _db.Campaigns
+            var arabic = CampaignMapping.IsArabic(request.Language);
+
+            var query = _db.Campaigns
                 .Where(c => c.Status == CampaignStutes.Active)
-                .OrderBy(c => c.EndTime)
-                .Select(c => new CampaignDto(c.Id, c.ArName, c.EnName, c.ArDescription, c.EnDescription, c.GoalAmount, c.RaisedAmount, c.EndTime, c.CategoryId, c.Status));
-            var Campaigns = await _db.ToListAsync(query, cancellationToken);
+                .OrderBy(c => c.EndTime);
 
-            return Result.Success(Campaigns);
+            var campaigns = await _db.ToListAsync(query, cancellationToken);
+
+            return Result.Success(campaigns.Select(c => CampaignMapping.ToDto(c, arabic)).ToList());
         }
-
     }
 }
