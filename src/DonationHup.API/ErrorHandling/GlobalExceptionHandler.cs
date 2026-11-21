@@ -1,6 +1,8 @@
 ﻿using DonationHup.Application.Common.Exceptions;
 using DonationHup.Application.Common.Results;
 using DonationHup.Application.Features.Campaigns;
+using DonationHup.Application.Features.Categories;
+using DonationHup.Domain.Common;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace DonationHup.API.ErrorHandling
@@ -19,10 +21,19 @@ namespace DonationHup.API.ErrorHandling
 
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            // Full details (message + stack trace) go to the log only.
-            _logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
+            var error = exception switch
+            {
+                DomainException d when d.Code == CategoryErrors.HasCampaigns.Code => CategoryErrors.HasCampaigns,
+                DomainException d => CampaignErrors.FromDomain(d),
+                ConcurrencyException => CampaignErrors.ConcurrencyConflict,
+                _ => Unexpected
+            };
 
-            var error = exception is ConcurrencyException ? CampaignErrors.ConcurrencyConflict : Unexpected;
+            // Expected business failures are a warning; anything else is an error with the full stack trace.
+            if (error == Unexpected)
+                _logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
+            else
+                _logger.LogWarning("{Code}: {Message}. TraceId: {TraceId}", error.Code, exception.Message, httpContext.TraceIdentifier);
 
             var result = ProblemFactory.Create(httpContext, error);
             httpContext.Response.StatusCode = result.StatusCode!.Value;

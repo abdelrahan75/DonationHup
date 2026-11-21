@@ -189,13 +189,13 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Alternative:** reading `IConfiguration["..."]` where needed (typos and missing values only show up at runtime) or committing the secrets (a security incident).
 
 ### 8. Expected errors are `Result` values; a global handler catches only unexpected crashes (Sprint 2)
-- **Why:** handlers return `Result` / `Result<T>` with a static `Error` from the catalogue (20 codes: `AuthErrors`, `CategoryErrors`, `CampaignErrors`, `DonationErrors`, `CommonErrors`, ...). Each `ErrorType` maps to one HTTP status in `ProblemFactory`. Business rules stay in the entity (it throws `DomainException`), and the handler turns that into a `Result` error, so nothing expected is thrown past the handler.
+- **Why:** handlers return `Result` / `Result<T>` with a static `Error` from the catalogue (20 codes: `AuthErrors`, `CategoryErrors`, `CampaignErrors`, `DonationErrors`, `CommonErrors`, ...). Each `ErrorType` maps to one HTTP status in `ProblemFactory`. Business rules stay in the entity (it throws `DomainException`) and `UnitOfWork` throws `ConcurrencyException`. Handlers have no try/catch: `GlobalExceptionHandler` maps both to the catalogue error (422 / 409 / ...), so the handlers stay short.
 - **Validation:** `ValidationBehavior` (MediatR pipeline) runs the FluentValidation validators first and returns `Validation.Failed` (400 + `errors`) without calling the handler.
-- **Unexpected errors:** `GlobalExceptionHandler` (`IExceptionHandler`) logs the full exception and returns a generic 500 ProblemDetails with `code` and `traceId`. No message, stack trace or SQL leaks.
+- **Unexpected errors:** the same `GlobalExceptionHandler` (`IExceptionHandler`) logs the full exception and returns a generic 500 ProblemDetails with `code` and `traceId`. No message, stack trace or SQL leaks.
 - **Alternative:** exceptions for business failures. Simpler to write, but slower and hidden from the method signature.
 
 ### 8b. Optimistic concurrency on campaigns (Sprint 2)
-- **Why:** two admins editing one campaign must not silently overwrite each other. `Campaign.RowVersion` is an EF row-version token. The client sends the last `rowVersion` it read, the repository sets it as the original value, and `UnitOfWork` turns `DbUpdateConcurrencyException` into `ConcurrencyException`. The update handler returns `Campaign.ConcurrencyConflict` (409).
+- **Why:** two admins editing one campaign must not silently overwrite each other. `Campaign.RowVersion` is an EF row-version token. The client sends the last `rowVersion` it read, the repository sets it as the original value, and `UnitOfWork` turns `DbUpdateConcurrencyException` into `ConcurrencyException`. `GlobalExceptionHandler` returns `Campaign.ConcurrencyConflict` (409).
 
 ### 8c. Campaign language and DTOs (Sprint 2)
 - Public endpoints return one language chosen from `Accept-Language` (`ar` or `ar-*`, anything else falls back to `en`). Admin endpoints return both languages plus `rowVersion` (`GET /campaigns/{id}/admin` was added so an admin can read the `rowVersion` needed for `PUT`).

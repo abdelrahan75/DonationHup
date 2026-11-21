@@ -1,9 +1,14 @@
 ﻿
+using DonationHub.Infrastructure;
 using DonationHub.Infrastructure.data;
 using DonationHub.Infrastructure.data.Interceptor;
 using DonationHub.Infrastructure.Identity;
 using DonationHub.Infrastructure.Repositories;
 using DonationHup.Application.Common;
+using DonationHup.Application.Common.Interfaces;
+using DonationHup.Application.Features.Auth;
+using DonationHup.Application.Features.Campaigns;
+using DonationHup.Application.Features.Categories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,10 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DonationHub.Infrastructure;
-using DonationHup.Application.Features.Auth;
-using DonationHup.Application.Common.Interfaces;
-using DonationHup.Application.Features.Categories;
 
 namespace DonationHub.Infrastructure
 {
@@ -32,6 +33,7 @@ namespace DonationHub.Infrastructure
             services.AddScoped<IUnitofWork, UnitOfWork>();
             services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>()); 
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ICampaignRepository, CampaignRepository>();
 
             services.AddIdentityCore<ApplicationUser>(options =>
             {

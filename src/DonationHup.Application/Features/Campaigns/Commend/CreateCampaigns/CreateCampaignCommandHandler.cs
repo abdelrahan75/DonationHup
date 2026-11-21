@@ -36,18 +36,10 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
             if (await _categories.GetByIdAsync(request.CategoryId, cancellationToken) is null)
                 return Result.Failure<CampaignAdminDto>(CategoryErrors.NotFound);
 
-            Campaign campaign;
-            try
-            {
-                campaign = Campaign.Create(
-                    request.TitleAr, request.TitleEn, request.DescriptionAr, request.DescriptionEn,
-                    request.GoalAmount, request.EndDate, request.CategoryId, request.UserId,
-                    _time.GetUtcNow().UtcDateTime);
-            }
-            catch (DomainException ex)
-            {
-                return Result.Failure<CampaignAdminDto>(CampaignErrors.FromDomain(ex));
-            }
+            var campaign = Campaign.Create(
+                request.TitleAr, request.TitleEn, request.DescriptionAr, request.DescriptionEn,
+                request.GoalAmount, request.EndDate, request.CategoryId, request.UserId,
+                _time.GetUtcNow().UtcDateTime);
 
             await _campaigns.AddAsync(campaign, cancellationToken);
             await _unitOfWork.CompleteAsync(cancellationToken);
@@ -56,3 +48,4 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
         }
     }
 }
+

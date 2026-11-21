@@ -1,6 +1,9 @@
 ﻿using DonationHup.Application.Common.Interfaces;
 using DonationHup.Application.Common.Results;
 using DonationHup.Domain.Common;
+using DonationHup.Application.Common.Interfaces;
+using DonationHup.Application.Common.Results;
+using DonationHup.Domain.Common;
 using DonationHup.Domain.Entites;
 using MediatR;
 using System;
@@ -29,14 +32,8 @@ namespace DonationHup.Application.Features.Categories.Commend.DeleteCategory
 
             var hasCampaigns = await _categories.HasCampaignsAsync(request.id, cancellationToken);
 
-            try
-            {
-                Category.EnsureCanBeDeleted(hasCampaigns);
-            }
-            catch (DomainException ex)
-            {
-                return Result.Failure(new Error(ex.Code, ex.Message, ErrorType.Conflict));
-            }
+            Category.EnsureCanBeDeleted(hasCampaigns);
+
             _categories.Remove(Category);
             await _unitOfWork.CompleteAsync(cancellationToken);
 
