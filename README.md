@@ -163,7 +163,7 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Why for writes:** a write must load the entity, run its domain methods, and save changes as one atomic unit. `IGenericRepository<T>` (`GetById`, `Add`, `Update`, `Remove`) hides EF Core from the Application layer, and `IUnitOfWork.CompleteAsync()` is the single place that commits, so several changes are saved in **one transaction** (for example, a donation succeeding must update the donation and the campaign together). Both are registered as `Scoped`, so they share one `DbContext` per request.
 - **Why for reads:** a read does not change anything, so it does not need the domain rules or change tracking. `AsNoTracking()` skips the change tracker (less memory and CPU), and `Select(...)` into a DTO fetches only the columns the response needs instead of loading whole entities and mapping them afterwards. A generic repository cannot express projections, filters, sorting and paging without becoming either a leaky abstraction or a copy of LINQ.
 - **Alternative:** route everything through the repository. One consistent path, but the reads become slower, and the repository grows a method for every query shape (or exposes `IQueryable`, which defeats the abstraction). Another alternative is the Specification pattern, which is a possible bonus later.
-- **Today:** the read queries live in the Infrastructure service implementations (the Application layer has no EF Core reference). In Sprint 2 they move to MediatR query handlers.
+- **Today (Sprint 2):** the read queries are MediatR query handlers that use `IAppDbContext` (no-tracking `IQueryable` sets). The Application layer has no EF Core reference.
 - **Never** return an EF entity from the API; controllers return DTOs.
 
 ### 4. Soft delete with a `SaveChangesInterceptor` and a global query filter
@@ -188,9 +188,18 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Why:** each setting group (`JwtOptians`, `SeedAdminOptions`, `DonationOptions`) is a typed class with data annotations and `ValidateOnStart()`. A missing or invalid value stops the app at startup with a clear message instead of failing later in the middle of a request. No secret is stored in the repository: `appsettings.json` has empty placeholders and real values come from user-secrets (and from environment variables in Docker, Sprint 6).
 - **Alternative:** reading `IConfiguration["..."]` where needed (typos and missing values only show up at runtime) or committing the secrets (a security incident).
 
-### 8. Expected errors use `AppException` + an exception handler returning ProblemDetails (temporary)
-- **Why:** services throw `AppException(code, message, status)` for expected failures (`Auth.*`, `Category.*`), and one `IExceptionHandler` converts it into a ProblemDetails response with the `code` and `traceId`. Controllers stay thin and every error has the same shape.
-- **Alternative:** the **Result pattern**, which treats expected failures as return values instead of exceptions (cheaper and explicit). It is planned for Sprint 2 together with MediatR and FluentValidation, and this handler will be replaced then.
+### 8. Expected errors are `Result` values; a global handler catches only unexpected crashes (Sprint 2)
+- **Why:** handlers return `Result` / `Result<T>` with a static `Error` from the catalogue (20 codes: `AuthErrors`, `CategoryErrors`, `CampaignErrors`, `DonationErrors`, `CommonErrors`, ...). Each `ErrorType` maps to one HTTP status in `ProblemFactory`. Business rules stay in the entity (it throws `DomainException`), and the handler turns that into a `Result` error, so nothing expected is thrown past the handler.
+- **Validation:** `ValidationBehavior` (MediatR pipeline) runs the FluentValidation validators first and returns `Validation.Failed` (400 + `errors`) without calling the handler.
+- **Unexpected errors:** `GlobalExceptionHandler` (`IExceptionHandler`) logs the full exception and returns a generic 500 ProblemDetails with `code` and `traceId`. No message, stack trace or SQL leaks.
+- **Alternative:** exceptions for business failures. Simpler to write, but slower and hidden from the method signature.
+
+### 8b. Optimistic concurrency on campaigns (Sprint 2)
+- **Why:** two admins editing one campaign must not silently overwrite each other. `Campaign.RowVersion` is an EF row-version token. The client sends the last `rowVersion` it read, the repository sets it as the original value, and `UnitOfWork` turns `DbUpdateConcurrencyException` into `ConcurrencyException`. The update handler returns `Campaign.ConcurrencyConflict` (409).
+
+### 8c. Campaign language and DTOs (Sprint 2)
+- Public endpoints return one language chosen from `Accept-Language` (`ar` or `ar-*`, anything else falls back to `en`). Admin endpoints return both languages plus `rowVersion` (`GET /campaigns/{id}/admin` was added so an admin can read the `rowVersion` needed for `PUT`).
+- `progressPercent` and `daysLeft` are computed in the read model with `TimeProvider` (never above 100 / never negative).
 
 ### 9. Unique category names: a database index and an early check
 - **Why:** the unique indexes on `ArName` and `EnName` are the real guarantee (they hold even under concurrent requests). The service checks first so a duplicate returns a clear `409` (`Category.NameArAlreadyExists` / `Category.NameEnAlreadyExists`) instead of a database error.
@@ -204,9 +213,9 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Why:** `.slnx` is the new, short, merge-friendly XML solution format. All projects live under `src/`, with the solution at the root.
 - **Alternative:** the classic `.sln`, which is longer and conflicts more often in git.
 
-### Known deviations (to be fixed)
-- The rule "no `DateTime.UtcNow` in handlers" (SRS §3.3 rule 7) is not applied yet: the services, the seeder and the soft-delete interceptor call `DateTime.UtcNow`. The domain already receives time as a parameter. `TimeProvider` will be injected in Sprint 2 when the handlers get unit tests.
-- No automated tests yet (planned for Sprint 2).
+### Known deviations
+- Campaign Manager access to campaigns comes in Sprint 3 (Sprint 2 is Admin only).
+- Unit tests cover domain rules, validators, handlers and the pipeline; the Infrastructure services (for example `AuthService`) are not unit-tested yet.
 
 ---
 
@@ -223,4 +232,15 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - [x] Scalar API documentation with Bearer support
 - [x] README
 
-**Next (Sprint 2):** Campaigns, CQRS with MediatR, FluentValidation, Result pattern, global exception handling, unit tests.
+## What is included in Sprint 2
+
+- [x] CQRS with MediatR `[12.5.0]` + feature folders
+- [x] Optimistic concurrency (`RowVersion`) -> `Campaign.ConcurrencyConflict`
+- [x] Result pattern + full error catalogue (20 codes)
+- [x] FluentValidation + `ValidationBehavior`
+- [x] Global exception handler + RFC 9457 ProblemDetails
+- [x] Campaigns: create, update, delete (soft), list, success stories, details (`progressPercent`, `daysLeft`), `Accept-Language`
+- [x] `TimeProvider` instead of `DateTime.UtcNow`
+- [x] Unit tests (xUnit, Moq, FluentAssertions): `dotnet test`
+
+**Next (Sprint 3):** donations, pagination/filtering, localized messages, Campaign Manager role.
