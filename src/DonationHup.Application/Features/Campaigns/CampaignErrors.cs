@@ -25,12 +25,12 @@ namespace DonationHup.Application.Features.Campaigns
         public static readonly Error ConcurrencyConflict =
             new("Campaign.ConcurrencyConflict", "The campaign was changed by someone else. Reload it and try again.", ErrorType.Conflict);
 
-        public static Error FromDomain(DomainException ex) => ex.Code switch
+        public static Error FromDomain(DomainError e) => e.Code switch
         {
             "Campaign.NotActive" => NotActive,
             "Campaign.GoalBelowRaised" => GoalBelowRaised,
             "Campaign.EndDateInPast" => EndDateInPast,
-            _ => new Error(ex.Code, ex.Message, ErrorType.UnprocessableEntity)
+            _ => new Error(e.Code, e.Message, ErrorType.UnprocessableEntity)
         };
     }
 }

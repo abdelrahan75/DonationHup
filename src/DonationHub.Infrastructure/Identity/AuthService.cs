@@ -56,13 +56,13 @@ namespace DonationHub.Infrastructure.Identity
             CreateUserAsync(command.Email, command.FullName, command.Password, command.PreferredLanguage, Roles.Donor);
 
         public Task<Result<UserProfileDto>> CreateStaffAsync(CreateStaffCommand command, CancellationToken cancellationToken) =>
-            CreateUserAsync(command.Email, command.FullName, command.TemporaryPassword, command.PreferredLanguage, command.Role);
+            CreateUserAsync(command.Email, command.FullName, command.TemporaryPassword,command.PreferredLanguage,command.Role);
 
         public async Task<Result<AuthResponse>> LoginAsync(LoginCommand command, CancellationToken cancellationToken)
         {
             var user = await _users.FindByEmailAsync(command.Email.Trim());
 
-            // نفس الخطأ للإيميل الغلط والباسورد الغلط (IDN-12)
+
             if (user is null || !await _users.CheckPasswordAsync(user, command.Password))
                 return Result.Failure<AuthResponse>(AuthErrors.InvalidCredentials);
 

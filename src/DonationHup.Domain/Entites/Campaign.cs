@@ -46,17 +46,19 @@ namespace DonationHup.Domain.Entites
 
         private Campaign() { }
 
-        public static Campaign Create(
-       string titleAr, string titleEn,
-       string descriptionAr, string descriptionEn,
-       decimal goalAmount, DateTime endDateUtc,
-       Guid categoryId, Guid createdByUserId,
-       DateTime nowUtc)
+        public static DomainResult<Campaign> Create(
+      string titleAr, string titleEn,
+      string descriptionAr, string descriptionEn,
+      decimal goalAmount, DateTime endDateUtc,
+      Guid categoryId, Guid createdByUserId,
+      DateTime nowUtc)
         {
-            EnsureGoalIsPositive(goalAmount);          // invariant 1
-            EnsureEndDateInFuture(endDateUtc, nowUtc); // invariant 2
+            if (CheckGoal(goalAmount) is { } goalError)               // invariant 1
+                return DomainResult.Failure<Campaign>(goalError);
+            if (CheckEndDate(endDateUtc, nowUtc) is { } dateError)    // invariant 2
+                return DomainResult.Failure<Campaign>(dateError);
 
-            return new Campaign
+            return DomainResult.Success(new Campaign
             {
                 ArName = titleAr,
                 EnName = titleEn,
@@ -70,24 +72,24 @@ namespace DonationHup.Domain.Entites
                 Status = CampaignStutes.Active,
                 CreatedAt = nowUtc,
                 UpdateAt = nowUtc
-         
-            };
-        
+
+            });
+
         }
-        public void Update(
+        public DomainResult Update(
         string titleAr, string titleEn,
         string descriptionAr, string descriptionEn,
         decimal goalAmount, DateTime endDateUtc,
         Guid categoryId, DateTime nowUtc)
         {
-            EnsureNotFinal();
-
-            EnsureGoalIsPositive(goalAmount);
-            if (goalAmount < RaisedAmount) 
-                throw new DomainException("Campaign.GoalBelowRaised", "The goal cannot be lower than the amount already raised.");
-
-            if (endDateUtc != EndTime) 
-                EnsureEndDateInFuture(endDateUtc, nowUtc);
+            if (CheckNotFinal() is { } finalError)                         // invariant 8
+                return DomainResult.Failure(finalError);
+            if (CheckGoal(goalAmount) is { } goalError)                    // invariant 1
+                return DomainResult.Failure(goalError);
+            if (goalAmount < RaisedAmount)                                 // invariant 7
+                return DomainResult.Failure(new DomainError("Campaign.GoalBelowRaised", "The goal cannot be lower than the amount already raised."));
+            if (endDateUtc != EndTime && CheckEndDate(endDateUtc, nowUtc) is { } dateError) // invariant 2
+                return DomainResult.Failure(dateError);
 
             ArName = titleAr;
             EnName = titleEn;
@@ -97,11 +99,13 @@ namespace DonationHup.Domain.Entites
             EndTime = endDateUtc;
             CategoryId = categoryId;
             UpdateAt = nowUtc;
+            return DomainResult.Success();
         }
-        public void EnsureCanAcceptDonation(DateTime nowUtc)
+        public DomainResult EnsureCanAcceptDonation(DateTime nowUtc)
         {
-            if (Status != CampaignStutes.Active || EndTime <= nowUtc)
-                throw new DomainException("Campaign.NotActive", "This campaign is not accepting donations.");
+            return Status != CampaignStutes.Active || EndTime <= nowUtc
+                ? DomainResult.Failure(new DomainError("Campaign.NotActive", "This campaign is not accepting donations."))
+                : DomainResult.Success();
         }
         public void AddSucceededDonation(decimal amount, DateTime nowUtc)
         {
@@ -112,37 +116,38 @@ namespace DonationHup.Domain.Entites
                 Status = CampaignStutes.Completed;
         }
 
-        public void MarkExpired(DateTime nowUtc)
+        public DomainResult MarkExpired(DateTime nowUtc)
         {
-            EnsureNotFinal(); // invariant 8
+            if (CheckNotFinal() is { } finalError)    // invariant 8
+                return DomainResult.Failure(finalError);
 
             if (EndTime > nowUtc)
-                throw new DomainException("Campaign.NotActive", "The campaign end date has not passed yet.");
+                return DomainResult.Failure(new DomainError("Campaign.NotActive", "The campaign end date has not passed yet."));
 
             Status = CampaignStutes.Expired;
             UpdateAt = nowUtc;
+            return DomainResult.Success();
         }
 
         public void SoftDelete(DateTime nowUtc)
         {
             IsDeleted = true;
+            DeletedAtUtc = nowUtc;
             UpdateAt = nowUtc;
         }
-        private void EnsureNotFinal()
-        {
-            if (Status != CampaignStutes.Active)
-                throw new DomainException("Campaign.NotActive", "A completed or expired campaign cannot be changed.");
-        }
-        private static void EnsureGoalIsPositive(decimal goal)
-        {
-            if (goal <= 0)
-                throw new DomainException("Campaign.InvalidGoal", "The goal amount must be greater than zero.");
-        }
-        private static void EnsureEndDateInFuture(DateTime endDateUtc, DateTime nowUtc)
-        {
-            if (endDateUtc <= nowUtc)
-                throw new DomainException("Campaign.EndDateInPast", "The end date must be in the future.");
-        }
+        private DomainError? CheckNotFinal() =>
+            Status != CampaignStutes.Active
+                ? new DomainError("Campaign.NotActive", "A completed or expired campaign cannot be changed.")
+                : null;
 
-    };
+        private static DomainError? CheckGoal(decimal goal) =>
+            goal <= 0
+                ? new DomainError("Campaign.InvalidGoal", "The goal amount must be greater than zero.")
+                : null;
+
+        private static DomainError? CheckEndDate(DateTime endDateUtc, DateTime nowUtc) =>
+            endDateUtc <= nowUtc
+                ? new DomainError("Campaign.EndDateInPast", "The end date must be in the future.")
+                : null;
+    }
 }

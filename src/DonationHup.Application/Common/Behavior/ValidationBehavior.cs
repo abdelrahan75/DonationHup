@@ -12,8 +12,8 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace DonationHup.Application.Common.Behavior
 {
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-     where TRequest : notnull
-     where TResponse : Result
+      where TRequest : notnull
+      where TResponse : Result
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;
 

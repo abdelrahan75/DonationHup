@@ -33,7 +33,7 @@ namespace DonationHup.Domain.Entites
                 ArName = nameAr.Trim(),
                 EnName = nameEn.Trim(),
                 ArDescription = descriptionAr,
-                EnDescription  = descriptionEn,
+                EnDescription = descriptionEn,
                 CreatedAt = nowUtc,
                 UpdateAt = nowUtc
             };
@@ -47,11 +47,10 @@ namespace DonationHup.Domain.Entites
             UpdateAt = nowUtc;
         }
 
-        public void EnsureCanBeDeleted(bool hasCampaigns)
-        {
-            if (hasCampaigns)
-                throw new DomainException("Category.HasCampaigns", "This category still has campaigns and cannot be deleted.");
-        }
+        public DomainResult EnsureCanBeDeleted(bool hasCampaigns) =>
+            hasCampaigns
+                ? DomainResult.Failure(new DomainError("Category.HasCampaigns", "This category still has campaigns and cannot be deleted."))
+                : DomainResult.Success();
 
 
     }

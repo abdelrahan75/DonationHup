@@ -36,11 +36,15 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
             if (await _categories.GetByIdAsync(request.CategoryId, cancellationToken) is null)
                 return Result.Failure<CampaignAdminDto>(CategoryErrors.NotFound);
 
-            var campaign = Campaign.Create(
+            var created = Campaign.Create(
                 request.TitleAr, request.TitleEn, request.DescriptionAr, request.DescriptionEn,
                 request.GoalAmount, request.EndDate, request.CategoryId, request.UserId,
                 _time.GetUtcNow().UtcDateTime);
 
+            if (created.IsFailure)
+                return Result.Failure<CampaignAdminDto>(CampaignErrors.FromDomain(created.Error!));
+
+            var campaign = created.Value!;
             await _campaigns.AddAsync(campaign, cancellationToken);
             await _unitOfWork.CompleteAsync(cancellationToken);
 

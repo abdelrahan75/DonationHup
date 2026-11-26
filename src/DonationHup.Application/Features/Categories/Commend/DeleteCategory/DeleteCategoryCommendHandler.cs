@@ -32,7 +32,9 @@ namespace DonationHup.Application.Features.Categories.Commend.DeleteCategory
 
             var hasCampaigns = await _categories.HasCampaignsAsync(request.id, cancellationToken);
 
-            Category.EnsureCanBeDeleted(hasCampaigns);
+            var canDelete = Category.EnsureCanBeDeleted(hasCampaigns);
+            if (canDelete.IsFailure)
+                return Result.Failure(CategoryErrors.HasCampaigns);
 
             _categories.Remove(Category);
             await _unitOfWork.CompleteAsync(cancellationToken);

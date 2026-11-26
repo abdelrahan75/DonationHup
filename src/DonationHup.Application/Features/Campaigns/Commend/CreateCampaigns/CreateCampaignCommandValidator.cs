@@ -9,7 +9,7 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
 {
     public class CreateCampaignCommandValidator : AbstractValidator<CreateCampaignCommand>
     {
-        public CreateCampaignCommandValidator()
+        public CreateCampaignCommandValidator(TimeProvider time)
         {
             RuleFor(x => x.TitleAr).NotEmpty().MaximumLength(200);
             RuleFor(x => x.TitleEn).NotEmpty().MaximumLength(200);
@@ -17,6 +17,8 @@ namespace DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns
             RuleFor(x => x.DescriptionEn).NotEmpty().MaximumLength(4000);
             RuleFor(x => x.GoalAmount).GreaterThan(0);
             RuleFor(x => x.CategoryId).NotEmpty();
+            RuleFor(x => x.EndDate).Must(d => d > time.GetUtcNow().UtcDateTime)
+                .WithMessage("The end date must be in the future.");
         }
     }
 

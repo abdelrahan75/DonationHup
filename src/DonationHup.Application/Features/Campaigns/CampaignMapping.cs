@@ -22,16 +22,6 @@ namespace DonationHup.Application.Features.Campaigns
 
         public static int DaysLeft(DateTime endUtc, DateTime nowUtc) =>
             endUtc <= nowUtc ? 0 : (int)Math.Ceiling((endUtc - nowUtc).TotalDays);
-
-        public static CampaignDto ToDto(Campaign c, bool arabic) => new(
-            c.Id, arabic ? c.ArName : c.EnName, arabic ? c.ArDescription : c.EnDescription,
-            c.GoalAmount, c.RaisedAmount, c.EndTime, c.CategoryId, c.Status);
-
-        public static CampaignDetailsDto ToDetails(Campaign c, bool arabic, DateTime nowUtc) => new(
-            c.Id, arabic ? c.ArName : c.EnName, arabic ? c.ArDescription : c.EnDescription,
-            c.GoalAmount, c.RaisedAmount, c.EndTime, c.CategoryId, c.Status,
-            ProgressPercent(c.RaisedAmount, c.GoalAmount), DaysLeft(c.EndTime, nowUtc));
-
         public static CampaignAdminDto ToAdmin(Campaign c) => new(
             c.Id, c.ArName, c.EnName, c.ArDescription, c.EnDescription,
             c.GoalAmount, c.RaisedAmount, c.EndTime, c.CategoryId, c.Status, c.RowVersion);

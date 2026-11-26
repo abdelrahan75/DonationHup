@@ -1,5 +1,7 @@
 ﻿using DonationHub.Infrastructure.data;
+using DonationHup.Application.Common.Exceptions;
 using DonationHup.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +19,17 @@ namespace DonationHub.Infrastructure.Repositories
             _context = context;
         }
 
-        public Task<int> CompleteAsync(CancellationToken cancellationToken = default)
+        public async Task<int> CompleteAsync(CancellationToken cancellationToken = default)
         {
-            return _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                // Keep EF Core out of the Application layer.
+                throw new ConcurrencyException(ex);
+            }
         }
     }
 }

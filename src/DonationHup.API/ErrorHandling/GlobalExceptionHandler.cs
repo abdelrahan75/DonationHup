@@ -23,8 +23,6 @@ namespace DonationHup.API.ErrorHandling
         {
             var error = exception switch
             {
-                DomainException d when d.Code == CategoryErrors.HasCampaigns.Code => CategoryErrors.HasCampaigns,
-                DomainException d => CampaignErrors.FromDomain(d),
                 ConcurrencyException => CampaignErrors.ConcurrencyConflict,
                 _ => Unexpected
             };

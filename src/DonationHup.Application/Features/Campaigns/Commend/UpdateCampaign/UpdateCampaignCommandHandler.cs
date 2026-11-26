@@ -1,4 +1,5 @@
-﻿using DonationHup.Application.Common.Interfaces;
+﻿using DonationHup.Application.Common.Exceptions;
+using DonationHup.Application.Common.Interfaces;
 using DonationHup.Application.Common.Results;
 using DonationHup.Application.Features.Categories;
 using DonationHup.Domain.Common;
@@ -42,12 +43,23 @@ namespace DonationHup.Application.Features.Campaigns.Commend.UpdateCampaign
 
             _campaigns.SetRowVersion(campaign, request.RowVersion);
 
-            campaign.Update(
+            var updated = campaign.Update(
                 request.TitleAr, request.TitleEn, request.DescriptionAr, request.DescriptionEn,
                 request.GoalAmount, request.EndDate, request.CategoryId,
                 _time.GetUtcNow().UtcDateTime);
 
-            await _unitOfWork.CompleteAsync(cancellationToken);
+            if (updated.IsFailure)
+                return Result.Failure<CampaignAdminDto>(CampaignErrors.FromDomain(updated.Error!));
+
+            try
+            {
+                await _unitOfWork.CompleteAsync(cancellationToken);
+            }
+            catch (ConcurrencyException)
+            {
+                // Someone saved a newer RowVersion first.
+                return Result.Failure<CampaignAdminDto>(CampaignErrors.ConcurrencyConflict);
+            }
 
             return Result.Success(CampaignMapping.ToAdmin(campaign));
         }

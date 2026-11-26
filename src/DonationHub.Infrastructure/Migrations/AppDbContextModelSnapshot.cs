@@ -78,7 +78,6 @@ namespace DonationHub.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PreferredLanguage")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
