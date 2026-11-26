@@ -1,5 +1,6 @@
 ﻿using DonationHup.Application.Features.Auth.Register;
 using DonationHup.Application.Features.Campaigns.Commend.CreateCampaigns;
+using DonationHup.Application.Features.Campaigns.Commend.UpdateCampaign;
 using FluentAssertions;
 using Xunit;
 using static DonationHub.UnitTests.TestData;
@@ -8,7 +9,7 @@ namespace DonationHub.UnitTests
 {
     public class ValidatorTests
     {
-        private readonly CreateCampaignCommandValidator _campaignValidator = new();
+        private readonly CreateCampaignCommandValidator _campaignValidator = new(new FixedTimeProvider(Now));
         private readonly RegisterCommandValidator _registerValidator = new();
 
         [Fact]
@@ -23,6 +24,26 @@ namespace DonationHub.UnitTests
             // Assert
             result.Errors.Select(e => e.PropertyName)
                 .Should().Contain(new[] { "TitleAr", "TitleEn", "GoalAmount", "CategoryId" });
+        }
+
+        [Fact]
+        public void CreateCampaign_EndDateInPast_Fails()
+        {
+            var command = new CreateCampaignCommand("ع", "T", "و", "D", 100, Now.AddDays(-1), Guid.NewGuid());
+
+            var result = _campaignValidator.Validate(command);
+
+            result.Errors.Should().Contain(e => e.PropertyName == "EndDate");
+        }
+
+        [Fact]
+        public void UpdateCampaign_EndDateInPast_Fails()
+        {
+            var validator = new UpdateCampaignCommandValidator(new FixedTimeProvider(Now));
+            var command = new UpdateCampaignCommand("ع", "T", "و", "D", 100, Now.AddDays(-1), Guid.NewGuid(), new byte[] { 1 })
+            { Id = Guid.NewGuid() };
+
+            validator.Validate(command).Errors.Should().Contain(e => e.PropertyName == "EndDate");
         }
 
         [Fact]

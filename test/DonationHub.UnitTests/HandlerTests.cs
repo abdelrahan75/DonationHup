@@ -185,7 +185,7 @@ namespace DonationHub.UnitTests
         {
             // Arrange
             var behavior = new ValidationBehavior<CreateCampaignCommand, Result<CampaignAdminDto>>(
-                new[] { new CreateCampaignCommandValidator() });
+                new[] { new CreateCampaignCommandValidator(_time) });
             var bad = new CreateCampaignCommand("", "", "", "", 0, Now.AddDays(5), Guid.Empty);
             var handlerCalled = false;
 
@@ -203,6 +203,6 @@ namespace DonationHub.UnitTests
             result.Error.Should().BeOfType<ValidationError>();
             result.Error!.Code.Should().Be("Validation.Failed");
         }
+
     }
-}
 

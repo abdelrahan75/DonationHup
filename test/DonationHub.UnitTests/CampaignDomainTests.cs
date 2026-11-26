@@ -12,21 +12,22 @@ namespace DonationHub.UnitTests
         [Theory]
         [InlineData(0)]
         [InlineData(-5)]
-        public void Create_GoalNotPositive_Throws(decimal goal)
+        public void Create_GoalNotPositive_Fails(decimal goal)
         {
             // Arrange + Act
-            var act = () => Campaign.Create("ع", "T", "و", "D", goal, Now.AddDays(5), Guid.NewGuid(), Guid.NewGuid(), Now);
+            var result = Campaign.Create("ع", "T", "و", "D", goal, Now.AddDays(5), Guid.NewGuid(), Guid.NewGuid(), Now);
 
             // Assert
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.InvalidGoal");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Campaign.InvalidGoal");
         }
 
         [Fact]
-        public void Create_EndDateInPast_Throws()
+        public void Create_EndDateInPast_Fails()
         {
-            var act = () => Campaign.Create("ع", "T", "و", "D", 100, Now.AddDays(-1), Guid.NewGuid(), Guid.NewGuid(), Now);
+            var result = Campaign.Create("ع", "T", "و", "D", 100, Now.AddDays(-1), Guid.NewGuid(), Guid.NewGuid(), Now);
 
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.EndDateInPast");
+            result.Error!.Code.Should().Be("Campaign.EndDateInPast");
         }
 
         [Fact]
@@ -39,49 +40,53 @@ namespace DonationHub.UnitTests
         }
 
         [Fact]
-        public void Update_GoalBelowRaised_Throws()
+        public void Update_GoalBelowRaised_Fails()
         {
             // Arrange
             var campaign = NewCampaign(goal: 1000);
             campaign.AddSucceededDonation(400, Now);
 
             // Act
-            var act = () => campaign.Update("ع", "T", "و", "D", 300, campaign.EndTime, campaign.CategoryId, Now);
+            var result = campaign.Update("ع", "T", "و", "D", 300, campaign.EndTime, campaign.CategoryId, Now);
 
             // Assert
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.GoalBelowRaised");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Campaign.GoalBelowRaised");
         }
 
         [Fact]
-        public void Update_CompletedCampaign_Throws()
+        public void Update_CompletedCampaign_Fails()
         {
             var campaign = NewCampaign(goal: 100);
             campaign.AddSucceededDonation(100, Now); // reaches the goal -> Completed
 
-            var act = () => campaign.Update("ع", "T", "و", "D", 500, campaign.EndTime, campaign.CategoryId, Now);
+            var result = campaign.Update("ع", "T", "و", "D", 500, campaign.EndTime, campaign.CategoryId, Now);
 
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.NotActive");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Campaign.NotActive");
         }
 
         [Fact]
-        public void Update_ExpiredCampaign_Throws()
+        public void Update_ExpiredCampaign_Fails()
         {
             var campaign = NewCampaign(daysToEnd: 1);
-            campaign.MarkExpired(Now.AddDays(2));
+            campaign.MarkExpired(Now.AddDays(2)).IsSuccess.Should().BeTrue();
 
-            var act = () => campaign.Update("ع", "T", "و", "D", 500, Now.AddDays(30), campaign.CategoryId, Now.AddDays(2));
+            var result = campaign.Update("ع", "T", "و", "D", 500, Now.AddDays(30), campaign.CategoryId, Now.AddDays(2));
 
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.NotActive");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Campaign.NotActive");
         }
 
         [Fact]
-        public void Update_NewEndDateInPast_Throws()
+        public void Update_NewEndDateInPast_Fails()
         {
             var campaign = NewCampaign();
 
-            var act = () => campaign.Update("ع", "T", "و", "D", 1000, Now.AddDays(-1), campaign.CategoryId, Now);
+            var result = campaign.Update("ع", "T", "و", "D", 1000, Now.AddDays(-1), campaign.CategoryId, Now);
 
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Campaign.EndDateInPast");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Campaign.EndDateInPast");
         }
 
         [Fact]
@@ -110,9 +115,10 @@ namespace DonationHub.UnitTests
         {
             var category = Category.Create("ص", "Health", "و", "D", Now);
 
-            var act = () => category.EnsureCanBeDeleted(hasCampaigns: true);
+            var result = category.EnsureCanBeDeleted(hasCampaigns: true);
 
-            act.Should().Throw<DomainException>().Which.Code.Should().Be("Category.HasCampaigns");
+            result.IsFailure.Should().BeTrue();
+            result.Error!.Code.Should().Be("Category.HasCampaigns");
         }
     }
 }

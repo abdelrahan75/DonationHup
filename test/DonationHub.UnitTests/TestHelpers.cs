@@ -16,7 +16,8 @@ namespace DonationHub.UnitTests
 
         public static Campaign NewCampaign(decimal goal = 1000, int daysToEnd = 10) =>
             Campaign.Create("عنوان", "Title", "وصف", "Description",
-                goal, Now.AddDays(daysToEnd), Guid.NewGuid(), Guid.NewGuid(), Now);
+                goal, Now.AddDays(daysToEnd), Guid.NewGuid(), Guid.NewGuid(), Now).Value!;
     }
 }
+
 

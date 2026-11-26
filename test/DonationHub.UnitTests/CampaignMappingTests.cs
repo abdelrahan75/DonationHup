@@ -54,15 +54,6 @@ namespace DonationHub.UnitTests
         {
             CampaignMapping.IsArabic(header).Should().Be(expected);
         }
-
-        [Fact]
-        public void ToDto_Arabic_ReturnsArabicTexts()
-        {
-            var dto = CampaignMapping.ToDto(NewCampaign(), arabic: true);
-
-            dto.Title.Should().Be("عنوان");
-            dto.Description.Should().Be("وصف");
-        }
     }
 }
 

@@ -163,7 +163,7 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Why for writes:** a write must load the entity, run its domain methods, and save changes as one atomic unit. `IGenericRepository<T>` (`GetById`, `Add`, `Update`, `Remove`) hides EF Core from the Application layer, and `IUnitOfWork.CompleteAsync()` is the single place that commits, so several changes are saved in **one transaction** (for example, a donation succeeding must update the donation and the campaign together). Both are registered as `Scoped`, so they share one `DbContext` per request.
 - **Why for reads:** a read does not change anything, so it does not need the domain rules or change tracking. `AsNoTracking()` skips the change tracker (less memory and CPU), and `Select(...)` into a DTO fetches only the columns the response needs instead of loading whole entities and mapping them afterwards. A generic repository cannot express projections, filters, sorting and paging without becoming either a leaky abstraction or a copy of LINQ.
 - **Alternative:** route everything through the repository. One consistent path, but the reads become slower, and the repository grows a method for every query shape (or exposes `IQueryable`, which defeats the abstraction). Another alternative is the Specification pattern, which is a possible bonus later.
-- **Today (Sprint 2):** the read queries are MediatR query handlers that use `IAppDbContext` (no-tracking `IQueryable` sets). The Application layer has no EF Core reference.
+- **Today (Sprint 2):** the read queries are MediatR query handlers that use `IAppDbContext` (no-tracking `IQueryable` sets) and `Select` straight into DTOs inside the query. The Application layer has no EF Core reference.
 - **Never** return an EF entity from the API; controllers return DTOs.
 
 ### 4. Soft delete with a `SaveChangesInterceptor` and a global query filter
@@ -189,13 +189,13 @@ Each decision lists the **reason** and the **alternative** that was considered.
 - **Alternative:** reading `IConfiguration["..."]` where needed (typos and missing values only show up at runtime) or committing the secrets (a security incident).
 
 ### 8. Expected errors are `Result` values; a global handler catches only unexpected crashes (Sprint 2)
-- **Why:** handlers return `Result` / `Result<T>` with a static `Error` from the catalogue (20 codes: `AuthErrors`, `CategoryErrors`, `CampaignErrors`, `DonationErrors`, `CommonErrors`, ...). Each `ErrorType` maps to one HTTP status in `ProblemFactory`. Business rules stay in the entity (it throws `DomainException`) and `UnitOfWork` throws `ConcurrencyException`. Handlers have no try/catch: `GlobalExceptionHandler` maps both to the catalogue error (422 / 409 / ...), so the handlers stay short.
+- **Why:** handlers return `Result` / `Result<T>` with a static `Error` from the catalogue (23 codes: `AuthErrors`, `CategoryErrors`, `CampaignErrors`, `DonationErrors`, `CommonErrors`, ...). Each `ErrorType` maps to one HTTP status in `ProblemFactory` (the only mapping; `ApiController` uses it). Business rules stay in the entity, and the entity methods **return a `DomainResult`** (a failure value) instead of throwing; the handler maps it to a catalogue error with `CampaignErrors.FromDomain`. A thrown exception is kept only for real crashes.
 - **Validation:** `ValidationBehavior` (MediatR pipeline) runs the FluentValidation validators first and returns `Validation.Failed` (400 + `errors`) without calling the handler.
-- **Unexpected errors:** the same `GlobalExceptionHandler` (`IExceptionHandler`) logs the full exception and returns a generic 500 ProblemDetails with `code` and `traceId`. No message, stack trace or SQL leaks.
+- **Unexpected errors:** `GlobalExceptionHandler` (`IExceptionHandler`) is the safety net: it logs the full exception and returns a generic 500 ProblemDetails with `code` and `traceId`. No message, stack trace or SQL leaks.
 - **Alternative:** exceptions for business failures. Simpler to write, but slower and hidden from the method signature.
 
 ### 8b. Optimistic concurrency on campaigns (Sprint 2)
-- **Why:** two admins editing one campaign must not silently overwrite each other. `Campaign.RowVersion` is an EF row-version token. The client sends the last `rowVersion` it read, the repository sets it as the original value, and `UnitOfWork` turns `DbUpdateConcurrencyException` into `ConcurrencyException`. `GlobalExceptionHandler` returns `Campaign.ConcurrencyConflict` (409).
+- **Why:** two admins editing one campaign must not silently overwrite each other. `Campaign.RowVersion` is an EF row-version token. The client sends the last `rowVersion` it read and the repository sets it as the original value. `UnitOfWork.CompleteAsync` catches `DbUpdateConcurrencyException` and throws the Application-level `ConcurrencyException` (so EF Core stays out of Application); the update handler catches it and returns `Campaign.ConcurrencyConflict` (409). `GlobalExceptionHandler` maps the same exception for any handler that does not catch it.
 
 ### 8c. Campaign language and DTOs (Sprint 2)
 - Public endpoints return one language chosen from `Accept-Language` (`ar` or `ar-*`, anything else falls back to `en`). Admin endpoints return both languages plus `rowVersion` (`GET /campaigns/{id}/admin` was added so an admin can read the `rowVersion` needed for `PUT`).
@@ -234,10 +234,10 @@ Each decision lists the **reason** and the **alternative** that was considered.
 
 ## What is included in Sprint 2
 
-- [x] CQRS with MediatR `[12.5.0]` + feature folders
+- [x] CQRS with MediatR pinned to `[12.5.0]` (the last free version; 13+ needs a commercial license) + feature folders
 - [x] Optimistic concurrency (`RowVersion`) -> `Campaign.ConcurrencyConflict`
 - [x] Result pattern + full error catalogue (20 codes)
-- [x] FluentValidation + `ValidationBehavior`
+- [x] FluentValidation + `ValidationBehavior` (the campaign validators also reject a past end date, using `TimeProvider`)
 - [x] Global exception handler + RFC 9457 ProblemDetails
 - [x] Campaigns: create, update, delete (soft), list, success stories, details (`progressPercent`, `daysLeft`), `Accept-Language`
 - [x] `TimeProvider` instead of `DateTime.UtcNow`
